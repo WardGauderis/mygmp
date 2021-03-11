@@ -1,1 +1,6 @@
-click/**
+/click/*
+!/click/elements/
+/click/elements/*
+!/click/elements/local/
+/click/elements/local/*
+!/click/elements/local/igmp
