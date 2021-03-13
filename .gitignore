@@ -4,3 +4,5 @@
 !/click/elements/local/
 /click/elements/local/*
 !/click/elements/local/igmp
+.idea
+*.pcap

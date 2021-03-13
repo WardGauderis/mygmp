@@ -1,16 +1,18 @@
 #!/bin/sh
+# eigen scriptje voor development
 
-cd /home/student/click/scripts/
+#cd scripts || exit
 
-../userlevel/click glue.click &
+
+sudo ../click/userlevel/click glue.click &
 
 sleep 1
 
-../userlevel/click -p 10001 router.click &
-../userlevel/click -p 10002 server.click &
-../userlevel/click -p 10003 client21.click &
-../userlevel/click -p 10004 client22.click &
-../userlevel/click -p 10005 client31.click &
-../userlevel/click -p 10006 client32.click &
+sudo ../click/userlevel/click -p 10001 router.click &
+sudo ../click/userlevel/click -p 10002 server.click &
+sudo ../click/userlevel/click -p 10003 client21.click &
+sudo ../click/userlevel/click -p 10004 client22.click &
+sudo ../click/userlevel/click -p 10005 client31.click &
+sudo ../click/userlevel/click -p 10006 client32.click &
 
 wait
