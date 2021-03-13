@@ -32,6 +32,7 @@ elementclass Router {
 	// Input and output paths for interface 0
 	input[0]
 		-> HostEtherFilter($server_address)
+		// requests, replies, other
 		-> server_class :: Classifier(12/0806 20/0001, 12/0806 20/0002, -)
 		-> ARPResponder($server_address)
 		-> [0]output;
