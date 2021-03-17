@@ -5,10 +5,6 @@
 #ifndef CLICK_IGMROUTINGTABLE_H
 #define CLICK_IGMROUTINGTABLE_H
 
+class IGMRoutingTable {};
 
-class IGMRoutingTable {
-
-};
-
-
-#endif //CLICK_IGMROUTINGTABLE_H
+#endif    // CLICK_IGMROUTINGTABLE_H

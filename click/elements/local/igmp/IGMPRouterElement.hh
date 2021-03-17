@@ -5,10 +5,6 @@
 #ifndef CLICK_IGMPROUTERELEMENT_H
 #define CLICK_IGMPROUTERELEMENT_H
 
+class IGMPRouterElement {};
 
-class IGMPRouterElement {
-
-};
-
-
-#endif //CLICK_IGMPROUTERELEMENT_H
+#endif    // CLICK_IGMPROUTERELEMENT_H

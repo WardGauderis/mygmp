@@ -5,10 +5,6 @@
 #ifndef CLICK_IGMPFILTERELEMENT_H
 #define CLICK_IGMPFILTERELEMENT_H
 
+class IGMPFilterElement {};
 
-class IGMPFilterElement {
-
-};
-
-
-#endif //CLICK_IGMPFILTERELEMENT_H
+#endif    // CLICK_IGMPFILTERELEMENT_H
