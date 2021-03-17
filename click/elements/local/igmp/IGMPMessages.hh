@@ -39,7 +39,7 @@ enum MessageType : uint8_t { QUERY = 0x11, REPORT = 0x22 };
 
 struct QueryMessage {
 	// Type = 0x11
-	uint8_t type;
+	MessageType type;
 
 	// 4.1.1. Max Resp Code
 	uint8_t maxRespCode;    // uses u8 float
@@ -48,7 +48,7 @@ struct QueryMessage {
 	uint16_t checksum;
 
 	// 4.1.3. Group Address
-	uint32_t groupAddress;
+	in_addr groupAddress;
 
 	// 4.1.4. Resv (Reserved)
 	unsigned int resv : 4;
@@ -56,7 +56,7 @@ struct QueryMessage {
 	// 4.1.5. S Flag (Suppress Router-Side Processing)
 	unsigned int s : 1;
 
-	// 4.1.6. QRV (Querier’s Robustness Variable)
+	// 4.1.6. QRV (Querier’s Robustness Variable) (max 7)
 	unsigned int qrv : 3;
 
 	// 4.1.7. QQIC (Querier’s Query Interval Code)
@@ -77,11 +77,15 @@ struct QueryMessage {
 	MUST otherwise ignore those additional octets. When sending a Query,
 	an IGMPv3 implementation MUST NOT include additional octets beyond
 	the fields described here. */
+
+	uint32_t maxRespTime() const;
+	bool check() const;
+	uint32_t QQI() const;
 };
 
 struct GroupRecord {
 	// 4.2.5. Record Type
-	uint8_t recordType;
+	RecordType recordType;
 
 	// 4.2.6. Aux Data Len
 	uint8_t auxDataLen;
@@ -110,7 +114,7 @@ struct GroupRecord {
 
 struct ReportMessage {
 	// Type = 0x22
-	uint8_t type;
+	MessageType type;
 
 	// 4.2.1. Reserved
 	uint8_t reserved;
@@ -132,17 +136,18 @@ QueryMessage createGeneralQuery() {
 	Query is transmitted). In a General Query, both the Group Address
 	field and the Number of Sources (N) field are zero. */
 
+	//TODO RFC-4.1.12: IP destination address 224.0.0.1
 	return QueryMessage{ QUERY, 0, 0, 0, 0, 0, 0, 0, 0 };
 }
 
-QueryMessage createGroupSpecificQuery() {
+QueryMessage createGroupSpecificQuery(in_addr groupAddress) {
 	/* A "Group-Specific Query" is sent by a multicast router to learn
 	the reception state, with respect to a *single* multicast address,
 	of the neighboring interfaces. In a Group-Specific Query, the
 	Group Address field contains the multicast address of interest,
 	and the Number of Sources (N) field contains zero. */
 
-	return QueryMessage{ QUERY, 0, 0, 0, 0, 0, 0, 0, 0 };
+	return QueryMessage{ QUERY, 0, 0, groupAddress, 0, 0, 0, 0, 0 };
 }
 
 ReportMessage createReportMessage() { return ReportMessage{ REPORT, 0, 0, 0, 0 }; }
