@@ -16,7 +16,7 @@ enum RecordType : uint8_t {
 	address. The Source Address [i] fields in this Group
 	Record contain the interface’s source list for the
 	specified multicast address, if it is non-empty */
-	MODE_IS_EXCLUDE = 2,
+	X MODE_IS_EXCLUDE = 2,
 
 	/* indicates that the interface
 	has changed to INCLUDE filter mode for the specified
@@ -86,14 +86,14 @@ struct GroupRecord {
 	// 4.2.5. Record Type
 	RecordType recordType;
 
-	// 4.2.6. Aux Data Len
+	// 4.2.6. Aux Data Len (units of 32-bit) (must be 0 and ignored)
 	uint8_t auxDataLen;
 
 	// 4.2.7. Number of Sources (N)
 	uint16_t numSources;
 
 	// 4.2.8. Multicast Address
-	uint32_t multicastAddress;
+	in_addr multicastAddress;
 
 	// 4.2.9. Source Address [i]
 	/* The Source Address [i] fields are a vector of n IP unicast addresses,
@@ -146,6 +146,7 @@ QueryMessage createGroupSpecificQuery(in_addr groupAddress) {
 	Group Address field contains the multicast address of interest,
 	and the Number of Sources (N) field contains zero. */
 
+	// TODO RFC--4.2.14: IP destination address 244.0.0.22
 	return QueryMessage{ QUERY, 0, 0, groupAddress, 0, 0, 0, 0, 0 };
 }
 
