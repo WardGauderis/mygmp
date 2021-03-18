@@ -1,21 +1,25 @@
 #include <ip.h>
 #include "IGMPMessages.hh"
 
-uint32_t QueryMessage::maxRespTime() const {
-	if (maxRespCode < 128) return maxRespCode;
-	const uint8_t mant = maxRespCode & 0x0F;
-	const uint8_t exp  = (maxRespCode >> 4) & 0x07;
-	return (mant | 0x10) << (exp + 3);
+uint32_t QueryMessage::maxRespTime() const { return U8toU32(maxRespCode); }
+
+uint32_t QueryMessage::QQI() const { return U8toU32(qqic); }
+
+template<class T> void setChecksum(T& p, uint32_t length){
+	p.checksum = click_in_cksum(&p, length);
 }
 
-bool QueryMessage::check() const {
-	// TODO ref-4.1.10: include source addresses and additional IP octets?
-	return !click_in_cksum((const unsigned char*) this, sizeof(*this));
+template<class T> bool checkChecksum(const T& p, uint32_t length){
+	return !click_in_cksum(&p, length);
 }
 
-uint32_t QueryMessage::QQI() const {
-	if (qqic < 128) return qqic;
-	const uint8_t mant = qqic & 0x0F;
-	const uint8_t exp  = (qqic >> 4) & 0x07;
-	return (mant | 0x10) << (exp + 3);
+uint32_t U8toU32(uint8_t byte) {
+	if (byte < 128) {
+		return byte;
+	} else {
+		uint8_t exp  = (byte & 0x70) >> 4;
+		uint8_t mant = byte & 0x0F;
+
+		return (mant | 0x10) << (exp + 3);
+	}
 }

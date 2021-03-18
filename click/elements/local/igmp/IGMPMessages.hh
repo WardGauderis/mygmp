@@ -79,7 +79,6 @@ struct QueryMessage {
 	the fields described here. */
 
 	uint32_t maxRespTime() const;
-	bool check() const;
 	uint32_t QQI() const;
 };
 
@@ -136,7 +135,7 @@ QueryMessage createGeneralQuery() {
 	Query is transmitted). In a General Query, both the Group Address
 	field and the Number of Sources (N) field are zero. */
 
-	//TODO RFC-4.1.12: IP destination address 224.0.0.1
+	// TODO RFC-4.1.12: IP destination address 224.0.0.1
 	return QueryMessage{ QUERY, 0, 0, 0, 0, 0, 0, 0, 0 };
 }
 
@@ -152,15 +151,10 @@ QueryMessage createGroupSpecificQuery(in_addr groupAddress) {
 
 ReportMessage createReportMessage() { return ReportMessage{ REPORT, 0, 0, 0, 0 }; }
 
-uint32_t U8toU32(uint8_t byte) {
-	if (byte < 128) {
-		return byte;
-	} else {
-		uint8_t exp  = (byte & 0x70) >> 4;
-		uint8_t mant = byte & 0x0F;
+template<class T> void setChecksum(T& p, uint32_t length);
 
-		return (mant | 0x10) << (exp + 3);
-	}
-}
+template<class T> bool checkChecksum(const T& p, uint32_t length);
+
+uint32_t U8toU32(uint8_t byte);
 
 #endif    // CLICK_IGMPMESSAGES_H
