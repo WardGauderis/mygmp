@@ -13,7 +13,11 @@ elementclass Client {
 					$address:ipnet 0,
 					0.0.0.0/0.0.0.0 $gateway 1)
 		-> [1]output;
-	
+
+	// Outgoing Packets
+	// TODO RFC-4: encap in correct IP header
+    // TODO RFC--4.2.14: IP destination address 244.0.0.22
+
 	rt[1]
 		-> DropBroadcasts
 		-> ipgw :: IPGWOptions($address)
@@ -30,6 +34,7 @@ elementclass Client {
 	// Incoming Packets
 	input
 		-> HostEtherFilter($address)
+		// ARP requests, ARP replies, IP packets
 		-> in_cl :: Classifier(12/0806 20/0001, 12/0806 20/0002, 12/0800)
 		-> arp_res :: ARPResponder($address)
 		-> output;
