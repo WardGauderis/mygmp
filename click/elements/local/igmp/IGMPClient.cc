@@ -2,6 +2,7 @@
 #include <click/args.hh>
 #include <click/error.hh>
 #include <timer.hh>
+#include <ether.h>
 #include "IGMPClient.hh"
 
 CLICK_DECLS
@@ -29,7 +30,7 @@ int IGMPClient::handleJoin(const String& conf, Element* e, void* thunk, ErrorHan
 	if (client->state->removeAddress(address))
 		client->scheduleStateChangeMessage(CHANGE_TO_EXCLUDE_MODE, address);
 
-	return 0
+	return 0;
 }
 
 int IGMPClient::handleLeave(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
@@ -47,15 +48,31 @@ int IGMPClient::handleLeave(const String& conf, Element* e, void* thunk, ErrorHa
 	if (client->state->removeAddress(address))
 		client->scheduleStateChangeMessage(CHANGE_TO_INCLUDE_MODE, address);
 
-	return 0
+	return 0;
 }
 
 ReportMessage* IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress address) {
-	//	TODO RFC-2: IPMulticastListen(address, INCLUDE/EXCLUDE, {})
+	auto packet = Packet::make(sizeof(click_ether) + sizeof(click_ip), 0,
+	                           sizeof(ReportMessage) + sizeof(GroupRecord), 0);
 
-	// TODO send one packet before scheduling
+	if (!packet) {
+		click_chatter("Could not allocate packet");
+		return nullptr;
+	}
+	memset(packet->data(), 0, packet->length());
 
-	auto* timerdata = new ScheduledReport{ this, nullptr, qrv };
+	auto header  = (ReportMessage*) packet;
+	header->type = REPORT;
+	// TODO try without htons and wireshark
+	header->NumGroupRecords = htons(1);
+
+	auto record              = (GroupRecord*) (header + 1);
+	record->recordType       = type;
+	record->multicastAddress = address.in_addr();
+
+	output(0).push(packet);
+
+	auto* timerdata = new ScheduledReport{ this, header, qrv - 1 };
 	auto* t         = new Timer(&handleReport, timerdata);
 	t->initialize(this);
 	t->schedule_after_msec((float) rand() / (float) RAND_MAX * unsolicitedReportInterval);
