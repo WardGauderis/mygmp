@@ -133,30 +133,13 @@ const static uint32_t QQI_DEFAULT = 125;
 const static uint32_t QRI_DEFAULT = 100;
 
 
-QueryMessage createGeneralQuery() {
-	/* A "General Query" is sent by a multicast router to learn the
-	complete multicast reception state of the neighboring interfaces
-	(that is, the interfaces attached to the network on which the
-	Query is transmitted). In a General Query, both the Group Address
-	field and the Number of Sources (N) field are zero. */
+QueryMessage createGeneralQuery();
 
-	// TODO RFC-4.1.12: IP destination address 224.0.0.1
-	return QueryMessage{ QUERY, 0, 0, 0, 0, 0, 0, 0, 0 };
-}
+QueryMessage createGroupSpecificQuery(in_addr groupAddress);
 
-QueryMessage createGroupSpecificQuery(in_addr groupAddress) {
-	/* A "Group-Specific Query" is sent by a multicast router to learn
-	the reception state, with respect to a *single* multicast address,
-	of the neighboring interfaces. In a Group-Specific Query, the
-	Group Address field contains the multicast address of interest,
-	and the Number of Sources (N) field contains zero. */
+ReportMessage createReportMessage();
 
-	return QueryMessage{ QUERY, 0, 0, groupAddress, 0, 0, 0, 0, 0 };
-}
-
-ReportMessage createReportMessage() { return ReportMessage{ REPORT, 0, 0, 0, 0 }; }
-
-GroupRecord createGroupRecord() { return GroupRecord{ CHANGE_TO_INCLUDE_MODE, 0, 0, 0 }; }
+GroupRecord createGroupRecord();
 
 template<class T> void setChecksum(T& p, uint32_t length);
 
