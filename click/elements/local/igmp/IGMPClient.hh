@@ -51,17 +51,17 @@ public:
 	static int handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
 	static int handleLeave(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
 
-	ReportMessage* scheduleStateChangeMessage(RecordType type, IPAddress address);
+	void scheduleStateChangeMessage(RecordType type, IPAddress address);
 
 private:
 	IGMPClientState* state;
-	uint32_t qrv;
+	uint32_t qrv = 5;
 	const uint32_t unsolicitedReportInterval = 1;
 
 	struct ScheduledReport {
-		IGMPClient*    client;
-		ReportMessage* packet;
-		uint32_t submissions;
+		IGMPClient* client;
+		Packet* packet;
+		uint32_t remaining;
 	};
 
 	static void handleReport(Timer* timer, void* data);

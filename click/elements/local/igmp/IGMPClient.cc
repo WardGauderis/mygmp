@@ -21,7 +21,7 @@ void IGMPClient::add_handlers() {
 	add_write_handler("leave", &handleLeave, nullptr);
 }
 
-void IGMPClient::push(int, Packet* p) { click_chatter("AANGEKOMEN"); }
+void IGMPClient::push(int, Packet* p) {}
 
 int IGMPClient::handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
 	auto client = (IGMPClient*) e;
@@ -35,8 +35,10 @@ int IGMPClient::handleJoin(const String& conf, Element* e, void* thunk, ErrorHan
 		return errh->error("Could not parse multicast-address");
 	}
 
-	if (client->state->addAddress(address))
+	if (client->state->addAddress(address)) {
 		client->scheduleStateChangeMessage(CHANGE_TO_EXCLUDE_MODE, address);
+		click_chatter("Joined %s", address.unparse().c_str());
+	}
 
 	return 0;
 }
@@ -51,6 +53,7 @@ int IGMPClient::handleLeave(const String& conf, Element* e, void* thunk, ErrorHa
 
 	if (Args(vconf, client, errh).read_mp("ADDRESS", address).complete() < 0) {
 		return errh->error("Could not parse multicast-address");
+		click_chatter("Left %s", address.unparse().c_str());
 	}
 
 	if (client->state->removeAddress(address))
@@ -59,13 +62,13 @@ int IGMPClient::handleLeave(const String& conf, Element* e, void* thunk, ErrorHa
 	return 0;
 }
 
-ReportMessage* IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress address) {
+void IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress address) {
 	auto packet = Packet::make(sizeof(click_ether) + sizeof(click_ip), 0,
 	                           sizeof(ReportMessage) + sizeof(GroupRecord), 0);
 
 	if (!packet) {
 		click_chatter("Could not allocate packet");
-		return nullptr;
+		return;
 	}
 	memset(packet->data(), 0, packet->length());
 
@@ -78,22 +81,30 @@ ReportMessage* IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress
 	record->recordType       = type;
 	record->multicastAddress = address.in_addr();
 
-	output(0).push(packet);
+	header->checksum = click_in_cksum((const unsigned char*) (header),
+	                                  sizeof(ReportMessage) + sizeof(GroupRecord));
 
-	// if te klein
-	//	auto* timerdata = new ScheduledReport{ this, header, qrv - 1 };
-	//	auto* t         = new Timer(&handleReport, timerdata);
-	//	t->initialize(this);
-	//	t->schedule_after_msec((float) rand() / (float) RAND_MAX * unsolicitedReportInterval);
+	output(0).push(packet->clone());
 
-	return 0;
+	if (qrv <= 1) return;
+
+	auto* timerdata = new ScheduledReport{ this, packet, qrv - 1 };
+	auto* timer     = new Timer(&handleReport, timerdata);
+	timer->initialize(this);
+	timer->schedule_after_msec((float) rand() / (float) RAND_MAX * unsolicitedReportInterval);
+
+	return;
 }
 
 void IGMPClient::handleReport(Timer* timer, void* data) {
 	auto* report = (ScheduledReport*) data;
 	assert(report);
-	//	report->client->handle(report)
-	//	output(0)
+
+	report->client->output(0).push(report->packet->clone());
+	if (report->remaining <= 1) return;
+	report->remaining--;
+	timer->schedule_after_msec((float) rand() / (float) RAND_MAX *
+	                           report->client->unsolicitedReportInterval);
 }
 
 CLICK_ENDDECLS

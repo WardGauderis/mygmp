@@ -2,6 +2,7 @@
 #define CLICK_IGMPMESSAGES_H
 
 #include <cstdint>
+#include <click/ipaddress.hh>
 
 enum RecordType : uint8_t {
 	/* indicates that the interface has a
@@ -132,7 +133,6 @@ const static uint32_t QRV_DEFAULT = 2;
 const static uint32_t QQI_DEFAULT = 125;
 const static uint32_t QRI_DEFAULT = 100;
 
-
 QueryMessage createGeneralQuery();
 
 QueryMessage createGroupSpecificQuery(in_addr groupAddress);
@@ -140,10 +140,6 @@ QueryMessage createGroupSpecificQuery(in_addr groupAddress);
 ReportMessage createReportMessage();
 
 GroupRecord createGroupRecord();
-
-template<class T> void setChecksum(T& p, uint32_t length);
-
-template<class T> bool checkChecksum(const T& p, uint32_t length);
 
 uint32_t U8toU32(uint8_t byte);
 
