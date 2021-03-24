@@ -21,8 +21,7 @@ void IGMPClient::add_handlers() {
 	add_write_handler("leave", &handleLeave, nullptr);
 }
 
-void IGMPClient::push(int, Packet* p) {
-}
+void IGMPClient::push(int, Packet* p) { click_chatter("AANGEKOMEN"); }
 
 int IGMPClient::handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
 	auto client = (IGMPClient*) e;
@@ -36,7 +35,7 @@ int IGMPClient::handleJoin(const String& conf, Element* e, void* thunk, ErrorHan
 		return errh->error("Could not parse multicast-address");
 	}
 
-	if (client->state->removeAddress(address))
+	if (client->state->addAddress(address))
 		client->scheduleStateChangeMessage(CHANGE_TO_EXCLUDE_MODE, address);
 
 	return 0;
@@ -70,7 +69,7 @@ ReportMessage* IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress
 	}
 	memset(packet->data(), 0, packet->length());
 
-	auto header  = (ReportMessage*) packet;
+	auto header  = (ReportMessage*) packet->data();
 	header->type = REPORT;
 	// TODO try without htons and wireshark
 	header->NumGroupRecords = htons(1);
