@@ -18,7 +18,6 @@ QueryMessage createGeneralQuery() {
     Query is transmitted). In a General Query, both the Group Address
     field and the Number of Sources (N) field are zero. */
 
-    // TODO RFC-4.1.12: IP destination address 224.0.0.1
     return QueryMessage{ QUERY, 0, 0, 0, 0, 0, 0, 0, 0 };
 }
 

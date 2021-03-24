@@ -16,7 +16,8 @@ elementclass Client {
 
 	// Outgoing Packets
 	// TODO RFC-4: encap in correct IP header
-    // TODO RFC--4.2.14: IP destination address 244.0.0.22
+	// TODO RFC-4.1.12: IP destination address 224.0.0.1
+    // TODO RFC-4.2.14: IP destination address 244.0.0.22
 
 	rt[1]
 		-> DropBroadcasts

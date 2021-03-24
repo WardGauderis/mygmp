@@ -9,11 +9,13 @@ CLICK_DECLS
 // client:	1. reception of query / interface change -> send report	-- IGMPClient
 //			2. filter IP packets									-- IGMPClientFilter
 //			3. state												-- IGMPClientState
+
 // TODO decide elements and names:
-// router:	4. timer expired -> send query			-- IGMPRouterElement
-//			5. reception of report -> state change	-- IGMPRouterElement
-//			6. reception of data -> route			-- IGMPRoutingTable
-//			3. filter packet						-- IGMPFilterElement
+// router:	4. timer expired -> send query			-- IGMPRouter
+//			-. reception of report -> state change	-- IGMPRouter
+
+//			5. filter packet	                    -- IGMPRouterFilter
+//			6. reception of data -> route			-- IGMPRouterState
 
 // TODO RFC-5.1: change of interface state
 
