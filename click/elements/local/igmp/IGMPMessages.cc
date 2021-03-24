@@ -1,9 +1,15 @@
 #include <ip.h>
 #include "IGMPMessages.hh"
 
-uint32_t QueryMessage::maxRespTime() const { return U8toU32(maxRespCode); }
+uint32_t QueryMessage::maxRespTime() const
+{
+    return U8toU32(maxRespCode);
+}
 
-uint32_t QueryMessage::QQI() const { return U8toU32(qqic); }
+uint32_t QueryMessage::QQI() const
+{
+    return qqic ? U8toU32(qqic) : QQI_DEFAULT
+}
 
 template<class T> void setChecksum(T& p, uint32_t length){
 	p.checksum = click_in_cksum(&p, length);

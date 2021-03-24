@@ -128,6 +128,11 @@ struct ReportMessage {
 	uint16_t NumGroupRecords;
 };
 
+const static uint32_t QRV_DEFAULT = 2;
+const static uint32_t QQI_DEFAULT = 125;
+const static uint32_t QRI_DEFAULT = 100;
+
+
 QueryMessage createGeneralQuery() {
 	/* A "General Query" is sent by a multicast router to learn the
 	complete multicast reception state of the neighboring interfaces
