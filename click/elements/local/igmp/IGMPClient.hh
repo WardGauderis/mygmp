@@ -4,6 +4,7 @@
 #include <click/element.hh>
 #include "IGMPMessages.hh"
 #include "IGMPClientState.hh"
+#include <string>
 CLICK_DECLS
 
 // client:	1. reception of query / interface change -> send report	-- IGMPClient
@@ -55,17 +56,19 @@ public:
 
 private:
 	IGMPClientState* state;
-	uint32_t qrv = 5;
-	const uint32_t unsolicitedReportInterval = 1;
+	uint32_t         qrv                       = 5;
+	const uint32_t   unsolicitedReportInterval = 1000;
 
 	struct ScheduledReport {
 		IGMPClient* client;
-		Packet* packet;
-		uint32_t remaining;
+		Packet*     packet;
+		uint32_t    remaining;
 	};
 
 	static void handleReport(Timer* timer, void* data);
 };
+
+void printMessage(std::string front, ReportMessage* message);
 
 CLICK_ENDDECLS
 #endif    // IGMPCLIENT_H

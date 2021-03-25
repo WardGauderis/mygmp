@@ -3,6 +3,7 @@
 #include <click/error.hh>
 #include <click/timer.hh>
 #include <clicknet/ether.h>
+#include <string>
 #include "IGMPClient.hh"
 
 CLICK_DECLS
@@ -37,7 +38,6 @@ int IGMPClient::handleJoin(const String& conf, Element* e, void* thunk, ErrorHan
 
 	if (client->state->addAddress(address)) {
 		client->scheduleStateChangeMessage(CHANGE_TO_EXCLUDE_MODE, address);
-		click_chatter("Joined %s", address.unparse().c_str());
 	}
 
 	return 0;
@@ -53,11 +53,11 @@ int IGMPClient::handleLeave(const String& conf, Element* e, void* thunk, ErrorHa
 
 	if (Args(vconf, client, errh).read_mp("ADDRESS", address).complete() < 0) {
 		return errh->error("Could not parse multicast-address");
-		click_chatter("Left %s", address.unparse().c_str());
 	}
 
-	if (client->state->removeAddress(address))
+	if (client->state->removeAddress(address)) {
 		client->scheduleStateChangeMessage(CHANGE_TO_INCLUDE_MODE, address);
+	}
 
 	return 0;
 }
@@ -85,6 +85,7 @@ void IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress address) 
 	                                  sizeof(ReportMessage) + sizeof(GroupRecord));
 
 	output(0).push(packet->clone());
+	printMessage(std::to_string(qrv - 1) + " remaining", (ReportMessage*) header);
 
 	if (qrv <= 1) return;
 
@@ -92,8 +93,6 @@ void IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress address) 
 	auto* timer     = new Timer(&handleReport, timerdata);
 	timer->initialize(this);
 	timer->schedule_after_msec((float) rand() / (float) RAND_MAX * unsolicitedReportInterval);
-
-	return;
 }
 
 void IGMPClient::handleReport(Timer* timer, void* data) {
@@ -101,10 +100,28 @@ void IGMPClient::handleReport(Timer* timer, void* data) {
 	assert(report);
 
 	report->client->output(0).push(report->packet->clone());
+	printMessage(std::to_string(report->remaining - 1) + " remaining",
+	             (ReportMessage*) report->packet->data());
 	if (report->remaining <= 1) return;
 	report->remaining--;
 	timer->schedule_after_msec((float) rand() / (float) RAND_MAX *
 	                           report->client->unsolicitedReportInterval);
+}
+
+void printMessage(std::string front, ReportMessage* message) {
+	click_chatter("%s:\treport", front.c_str());
+	for (uint16_t i = 0; i < ntohs(message->NumGroupRecords); ++i) {
+		auto        record = (GroupRecord*) (message + 1) + i;
+		std::string type;
+		switch (record->recordType) {
+		case MODE_IS_INCLUDE: type = "is_inc"; break;
+		case MODE_IS_EXCLUDE: type = "is_exc"; break;
+		case CHANGE_TO_INCLUDE_MODE: type = "to_inc"; break;
+		case CHANGE_TO_EXCLUDE_MODE: type = "to_exc"; break;
+		}
+		click_chatter("\t%s %s", type.c_str(),
+		              IPAddress(record->multicastAddress).unparse().c_str());
+	}
 }
 
 CLICK_ENDDECLS
