@@ -3,31 +3,16 @@
 #include <click/error.hh>
 #include "IGMPClientState.hh"
 #include "IGMPMessages.hh"
+#include <algorithm>
 
 CLICK_DECLS
 
 bool IGMPClientState::addAddress(IPAddress address) {
-	if (hasAddress(address)) return false;
-	addresses.push_back(address);
-	return true;
+	return addresses.insert(address).second;
 }
 
 bool IGMPClientState::removeAddress(IPAddress address) {
-	for (auto& a : addresses) {
-		if (a == address) {
-			std::swap(a, addresses.back());
-			addresses.pop_back();
-			return true;
-		}
-	}
-	return false;
-}
-
-bool IGMPClientState::hasAddress(IPAddress address) {
-	for (const auto& a : addresses) {
-		if (a == address) return true;
-	}
-	return false;
+	return addresses.erase(address);
 }
 
 CLICK_ENDDECLS

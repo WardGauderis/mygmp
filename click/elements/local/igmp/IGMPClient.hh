@@ -5,6 +5,7 @@
 #include "IGMPMessages.hh"
 #include "IGMPClientState.hh"
 #include <string>
+#include <unordered_set>
 CLICK_DECLS
 
 // client:	1. reception of query / interface change -> send report	-- IGMPClient
@@ -19,6 +20,11 @@ CLICK_DECLS
 //			6. reception of data -> route			-- IGMPRouterState
 
 // TODO RFC-5.1: change of interface state
+
+// 1. compare before after -> report with records
+// 2. merge reports
+// 3. merged stops retransmissions of state-change for the same multicast adresses
+// 4. send merged qrv times
 
 // new change before retransmissions done -> merge state-change report instead
 // merge report is new TO_IN of TO_EX in our case?
@@ -55,9 +61,10 @@ public:
 	void scheduleStateChangeMessage(RecordType type, IPAddress address);
 
 private:
-	IGMPClientState* state;
-	uint32_t         qrv                       = 5;
-	const uint32_t   unsolicitedReportInterval = 1000;
+	IGMPClientState*           state;
+	uint32_t                   qrv                       = 2;
+	const uint32_t             unsolicitedReportInterval = 1000;
+	std::unordered_set<Timer*> timers;
 
 	struct ScheduledReport {
 		IGMPClient* client;

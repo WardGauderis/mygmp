@@ -98,7 +98,6 @@ void IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress address) 
 void IGMPClient::handleReport(Timer* timer, void* data) {
 	auto* report = (ScheduledReport*) data;
 	assert(report);
-
 	report->client->output(0).push(report->packet->clone());
 	printMessage(std::to_string(report->remaining - 1) + " remaining",
 	             (ReportMessage*) report->packet->data());
