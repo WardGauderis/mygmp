@@ -5,7 +5,7 @@
 #include "IGMPMessages.hh"
 #include "IGMPClientState.hh"
 #include <string>
-#include <unordered_set>
+#include <unordered_map>
 CLICK_DECLS
 
 // client:	1. reception of query / interface change -> send report	-- IGMPClient
@@ -62,9 +62,9 @@ public:
 
 private:
 	IGMPClientState*           state;
-	uint32_t                   qrv                       = 2;
-	const uint32_t             unsolicitedReportInterval = 1000;
-	std::unordered_set<Timer*> timers;
+	uint32_t                   qrv                       = 5;
+	const uint32_t             unsolicitedReportInterval = 5000;
+	std::unordered_map<IPAddress, Timer*, Hash> timers;
 
 	struct ScheduledReport {
 		IGMPClient* client;

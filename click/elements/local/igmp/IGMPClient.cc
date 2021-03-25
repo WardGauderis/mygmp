@@ -87,12 +87,18 @@ void IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress address) 
 	output(0).push(packet->clone());
 	printMessage(std::to_string(qrv - 1) + " remaining", (ReportMessage*) header);
 
+	auto iter = timers.find(address);
+	if (iter != timers.end()){
+		(*iter).second->clear();
+	}
+
 	if (qrv <= 1) return;
 
 	auto* timerdata = new ScheduledReport{ this, packet, qrv - 1 };
 	auto* timer     = new Timer(&handleReport, timerdata);
 	timer->initialize(this);
 	timer->schedule_after_msec((float) rand() / (float) RAND_MAX * unsolicitedReportInterval);
+	timers[address] = timer;
 }
 
 void IGMPClient::handleReport(Timer* timer, void* data) {
@@ -101,8 +107,10 @@ void IGMPClient::handleReport(Timer* timer, void* data) {
 	report->client->output(0).push(report->packet->clone());
 	printMessage(std::to_string(report->remaining - 1) + " remaining",
 	             (ReportMessage*) report->packet->data());
-	if (report->remaining <= 1) return;
-	report->remaining--;
+	if (--report->remaining <= 0) {
+		timer->clear();
+		return;
+	}
 	timer->schedule_after_msec((float) rand() / (float) RAND_MAX *
 	                           report->client->unsolicitedReportInterval);
 }
