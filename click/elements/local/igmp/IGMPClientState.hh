@@ -18,6 +18,8 @@ public:
 
 	bool removeAddress(IPAddress address);
 
+	bool hasAddress(IPAddress address);
+
 private:
 	// RFC-3.2: interface state
 	// state is only a set because the client has only one interface and socket and the source-list

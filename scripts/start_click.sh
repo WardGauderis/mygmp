@@ -1,7 +1,7 @@
 #!/bin/sh
 # eigen scriptje voor development
 
-#cd scripts || exit
+cd scripts || exit
 
 
 sudo ../click/userlevel/click glue.click &

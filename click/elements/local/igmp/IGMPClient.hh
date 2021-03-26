@@ -62,8 +62,8 @@ public:
 
 private:
 	IGMPClientState*           state;
-	uint32_t                   qrv                       = 5;
-	const uint32_t             unsolicitedReportInterval = 5000;
+	uint32_t                   qrv                       = 2;
+	const uint32_t             unsolicitedReportInterval = 1000;
 	std::unordered_map<IPAddress, Timer*, Hash> timers;
 
 	struct ScheduledReport {
