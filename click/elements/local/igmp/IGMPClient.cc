@@ -22,7 +22,42 @@ void IGMPClient::add_handlers() {
 	add_write_handler("leave", &handleLeave, nullptr);
 }
 
-void IGMPClient::push(int, Packet* p) {}
+// TODO RFC-5.2: reception of query
+
+// on query: schedule response in ]0, MaxRespTime[ or merge if existing
+// general interface timer, per-group timer
+// 1. sooner response to general -> no
+// 2. general -> schedule + cancel
+// 3. group + no pending -> schedule
+// 4. group + pending -> schedule min(pending, new)
+
+// on general timer expiration:
+// send report with all records
+
+// on group timer expiration:
+// send report with one record if exists
+
+void IGMPClient::push(int, Packet* p) {
+	// TODO good packet
+	auto query = (QueryMessage*) (((click_ip*) p->data()) + 1);
+
+	if (!state->hasState()) return;
+	auto delay = (float) rand() / (float) RAND_MAX * query->maxRespTime();
+
+	if (generalTimer->scheduled() &&
+	    generalTimer->expiry_steady() - Timestamp::now_steady() < delay) {
+		return;
+	} else if (query->groupAddress == 0) {
+		generalTimer->schedule_after_msec(delay);
+		// TODO assign
+	} else if (!groupTimers.count(query->groupAddress)) {
+		groupTimers[query->groupAddress]->schedule_after_msec(delay);
+		// TODO assign
+	} else if (groupTimers[query->groupAddress]->expiry_steady() - Timestamp::now_steady() > delay){
+		groupTimers[query->groupAddress]->schedule_after_msec(delay);
+		// TODO assign
+	}
+}
 
 int IGMPClient::handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
 	auto client = (IGMPClient*) e;
@@ -87,10 +122,8 @@ void IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress address) 
 	output(0).push(packet->clone());
 	printMessage(std::to_string(qrv - 1) + " remaining", (ReportMessage*) header);
 
-	auto iter = timers.find(address);
-	if (iter != timers.end()){
-		(*iter).second->clear();
-	}
+	auto iter = ChangeTimers.find(address);
+	if (iter != ChangeTimers.end()) { (*iter).second->clear(); }
 
 	if (qrv <= 1) return;
 
@@ -98,7 +131,7 @@ void IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress address) 
 	auto* timer     = new Timer(&handleReport, timerdata);
 	timer->initialize(this);
 	timer->schedule_after_msec((float) rand() / (float) RAND_MAX * unsolicitedReportInterval);
-	timers[address] = timer;
+	ChangeTimers[address] = timer;
 }
 
 void IGMPClient::handleReport(Timer* timer, void* data) {

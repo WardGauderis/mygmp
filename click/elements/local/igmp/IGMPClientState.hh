@@ -18,7 +18,9 @@ public:
 
 	bool removeAddress(IPAddress address);
 
-	bool hasAddress(IPAddress address);
+	bool hasAddress(IPAddress address) const;
+
+	bool hasState() const;
 
 private:
 	// RFC-3.2: interface state

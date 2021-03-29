@@ -1,4 +1,3 @@
-#include <ip.h>
 #include "IGMPMessages.hh"
 
 uint32_t QueryMessage::maxRespTime() const { return U8toU32(maxRespCode); }

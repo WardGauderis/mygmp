@@ -11,7 +11,11 @@ bool IGMPClientState::addAddress(IPAddress address) { return addresses.insert(ad
 
 bool IGMPClientState::removeAddress(IPAddress address) { return addresses.erase(address); }
 
-bool IGMPClientState::hasAddress(IPAddress address) { return addresses.count(address); }
+bool IGMPClientState::hasAddress(IPAddress address) const { return addresses.count(address); }
+
+bool IGMPClientState::hasState() const {
+	return !addresses.empty();
+}
 
 CLICK_ENDDECLS
 EXPORT_ELEMENT(IGMPClientState)
