@@ -12,7 +12,7 @@ enum RecordType : uint8_t {
 	specified multicast address, if it is non-empty */
 	MODE_IS_INCLUDE = 1,
 
-	/*  indicates that the interface has a
+	/* indicates that the interface has a
 	filter mode of EXCLUDE for the specified multicast
 	address. The Source Address [i] fields in this Group
 	Record contain the interface’s source list for the
@@ -27,7 +27,7 @@ enum RecordType : uint8_t {
 	if it is non-empty */
 	CHANGE_TO_INCLUDE_MODE = 3,
 
-	/*  indicates that the interface
+	/* indicates that the interface
 	has changed to EXCLUDE filter mode for the specified
 	multicast address. The Source Address [i] fields
 	in this Group Record contain the interface’s new

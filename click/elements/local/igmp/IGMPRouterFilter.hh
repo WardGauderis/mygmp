@@ -1,7 +1,3 @@
-//
-// Created by thomas on 24/03/21.
-//
-
 #ifndef CLICK_IGMPROUTERFILTER_H
 #define CLICK_IGMPROUTERFILTER_H
 
