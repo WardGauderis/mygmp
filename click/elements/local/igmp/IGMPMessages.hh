@@ -4,6 +4,18 @@
 #include <cstdint>
 #include <click/ipaddress.hh>
 
+// https://tools.ietf.org/html/rfc2113
+struct RouterAlertOption {
+    // option id
+    uint8_t byte1 = 0b10010100;
+    uint8_t byte2 = 0b00000100;
+
+    // 0 - Router shall examine packet
+    // 1..65536 - Reserved
+    uint8_t byte3 = 0b00000000;
+    uint8_t byte4 = 0b00000000;
+};
+
 enum RecordType : uint8_t {
 	/* indicates that the interface has a
 	filter mode of INCLUDE for the specified multicast

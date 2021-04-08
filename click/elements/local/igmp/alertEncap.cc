@@ -2,18 +2,7 @@
 #include <click/args.hh>
 #include <clicknet/ether.h>
 #include "alertEncap.hh"
-
-// https://tools.ietf.org/html/rfc2113
-struct RouterAlertOption {
-    // option id
-    uint8_t byte1 = 0b10010100;
-    uint8_t byte2 = 0b00000100;
-
-    // 0 - Router shall examine packet
-    // 1..65536 - Reserved
-    uint8_t byte3 = 0b00000000;
-    uint8_t byte4 = 0b00000000;
-};
+#include "IGMPMessages.hh"
 
 CLICK_DECLS
 int AlertEncap::configure(Vector<String>& args, ErrorHandler *) {

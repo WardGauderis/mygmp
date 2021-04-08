@@ -23,6 +23,13 @@ public:
 
     void processReport(ReportMessage* report, uint32_t interface);
 
+    // TODO
+    // Multicast routers send General Queries periodically to request group
+    // membership information from an attached network.  These queries are
+    // used to build and refresh the group membership state of systems on
+    // attached networks.  Systems respond to these queries by reporting
+    // their group membership state (and their desired set of sources) with
+    // Current-State Group Records in IGMPv3 Membership Reports.
     void sendQuery();
 
 private:

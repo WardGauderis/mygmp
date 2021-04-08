@@ -50,18 +50,25 @@ void IGMPRouter::processReport(ReportMessage *report, uint32_t interface) {
             case RecordType::CHANGE_TO_EXCLUDE_MODE:
                 // Exclude {} -> Someone wants to listen so we set it to true
                 std::get<2>(group) = true;
+
+
+
+                // TODO
                 // start group timer
                 break;
             case RecordType::MODE_IS_INCLUDE:
-            case RecordType::CHANGE_TO_INCLUDE_MODE:
                 // Include {} -> Want to be unsubscribed
                 // But the group itself will remain as EXCLUDE
                 break;
+            case RecordType::CHANGE_TO_INCLUDE_MODE:
+                // TODO
+                // A Group-Specific Query is sent to verify there are no systems that desire
+                // reception of the specified group or to "rebuild" the desired
+                // reception state for a particular group.  Group-Specific Queries are
+                // sent when a router receives a State-Change record indicating a system
+                // is leaving a group.
+                break;
         }
-
-        // TODO:  Group-Specific Queries are
-        // sent when a router receives a State-Change record indicating a system
-        // is leaving a group.
     }
 }
 
