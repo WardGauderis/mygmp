@@ -1,4 +1,4 @@
-#ifndef IGMPCLIENT_HH
+#ifndef IGMPROUTER_HH
 #define IGMPROUTER_HH
 
 #include <click/element.hh>
@@ -22,10 +22,11 @@ public:
     void push(int, Packet*) override;
 
     void processReport(ReportMessage* report, uint32_t interface);
+
     void sendQuery();
 
 private:
-//    IGMPRouterState* state;
+    IGMPRouterState* state;
 };
 CLICK_ENDDECLS
 
