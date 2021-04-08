@@ -26,14 +26,17 @@ void IGMPClient::add_handlers() {
 }
 
 void IGMPClient::push(int, Packet* p) {
-	if (p->ip_header_length() > 5 && *(p->data() + p->ip_header_length() - 4) ==  ){
-
+	RouterAlertOption option{};
+	if (p->ip_header_length() > 5 &&
+	    !memcmp((p->data() + p->ip_header_length() - 4), &option, sizeof(RouterAlertOption))) {
+		p->kill();
+		return;
 	}
-	// TODO good packet
+
 	auto query = (QueryMessage*) (((click_ip*) p->data()) + 1);
 
 	if (query->type != QUERY ||
-	    !click_in_chksum((const unsigned char*) query, sizeof(QueryMessage))) {
+	    !click_in_cksum((const unsigned char*) query, sizeof(QueryMessage))) {
 		p->kill();
 		return;
 	}
