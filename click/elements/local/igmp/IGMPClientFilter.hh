@@ -5,9 +5,6 @@
 #include "IGMPClientState.hh"
 CLICK_DECLS
 
-// TODO RFC-5: always enable 244.0.0.1; no IGMP messages about this address
-// filter router-alert?
-
 class IGMPClientFilter: public Element {
 public:
 	const char* class_name() const override { return "IGMPClientFilter"; }

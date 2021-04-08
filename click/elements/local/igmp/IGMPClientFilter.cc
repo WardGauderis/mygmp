@@ -15,11 +15,12 @@ int IGMPClientFilter::configure(Vector<String>& conf, ErrorHandler* errh) {
 	return 0;
 }
 
-void IGMPClientFilter::push(int port, Packet* p){
-	if (state->hasAddress(p->dst_ip_anno())) { output(0).push(p); }
+void IGMPClientFilter::push(int port, Packet* p) {
+	if (p->dst_ip_anno() == IPAddress("224.0.0.1") || state->hasAddress(p->dst_ip_anno())) {
+		output(0).push(p);
+	}
 	output(1).push(p);
 }
 CLICK_ENDDECLS
-
 
 EXPORT_ELEMENT(IGMPClientFilter)

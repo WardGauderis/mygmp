@@ -5,11 +5,6 @@
 #include "IGMPMessages.hh"
 
 CLICK_DECLS
-int AlertEncap::configure(Vector<String>& args, ErrorHandler *) {
-
-    return 0;
-}
-
 void AlertEncap::push(int, Packet* packet)
 {
     // maybe some checks to be sure we received an ip packet?

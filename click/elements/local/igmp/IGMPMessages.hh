@@ -1,8 +1,20 @@
 #ifndef CLICK_IGMPMESSAGES_H
 #define CLICK_IGMPMESSAGES_H
 
+#include <click/element.hh>
 #include <cstdint>
 #include <click/ipaddress.hh>
+
+inline uint32_t U8toU32(uint8_t byte) {
+	if (byte < 128) {
+		return byte;
+	} else {
+		uint8_t exp  = (byte & 0x70) >> 4;
+		uint8_t mant = byte & 0x0F;
+
+		return (mant | 0x10) << (exp + 3);
+	}
+}
 
 // https://tools.ietf.org/html/rfc2113
 struct RouterAlertOption {
@@ -91,8 +103,8 @@ struct QueryMessage {
 	an IGMPv3 implementation MUST NOT include additional octets beyond
 	the fields described here. */
 
-	uint32_t maxRespTime() const;
-	uint32_t QQI() const;
+	inline uint32_t maxRespTime() const { return U8toU32(maxRespCode); }
+	uint32_t        QQI() const;
 };
 
 struct GroupRecord {
@@ -152,7 +164,5 @@ QueryMessage createGroupSpecificQuery(in_addr groupAddress);
 ReportMessage createReportMessage();
 
 GroupRecord createGroupRecord();
-
-uint32_t U8toU32(uint8_t byte);
 
 #endif    // CLICK_IGMPMESSAGES_H

@@ -9,8 +9,6 @@ class AlertEncap : public Element
     const char* port_count() const override { return "1/1"; }
     const char* processing() const override { return PUSH; }
 
-    int configure(Vector<String>&, ErrorHandler*) override;
-
     void push(int, Packet*) override;
 };
 

@@ -22,6 +22,12 @@ public:
 
 	bool hasState() const;
 
+	size_t size() const;
+
+	typedef std::unordered_set<IPAddress, Hash>::const_iterator const_iterator;
+	const_iterator begin() { return addresses.begin(); }
+	const_iterator end() { return addresses.end(); }
+
 private:
 	// RFC-3.2: interface state
 	// state is only a set because the client has only one interface and socket and the source-list

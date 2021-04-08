@@ -13,11 +13,9 @@ elementclass Client {
 					$address:ipnet 0,
 					244.0.0.0/4 2,
 					0.0.0.0/0.0.0.0 $gateway 1)
-		-> ;
+		-> [1]output;
 
 	// IGMP
-	//TODO router alert option
-	//TODO filter bad IGMP
 
     state::IGMPClientState;
 
@@ -25,6 +23,7 @@ elementclass Client {
 	    -> classifier::IPClassifier(ip proto 2, -)
 	    -> igmp::IGMPClient(state)
 	    -> IPEncap(2, $address, 224.0.0.22, TTL 1, TOS 0xc0)
+	    -> AlertEncap
 		-> arpq :: ARPQuerier($address);
 
 	classifier[1]

@@ -14,6 +14,9 @@ int IGMPClient::configure(Vector<String>& conf, ErrorHandler* errh) {
 		return errh->error("Could not parse IGMPClientState");
 	}
 
+	generalTimer = new Timer(&handleChangeReport, (void*) this);
+	generalTimer->initialize(this);
+
 	return 0;
 }
 
@@ -22,41 +25,38 @@ void IGMPClient::add_handlers() {
 	add_write_handler("leave", &handleLeave, nullptr);
 }
 
-// TODO RFC-5.2: reception of query
-
-// on query: schedule response in ]0, MaxRespTime[ or merge if existing
-// general interface timer, per-group timer
-// 1. sooner response to general -> no
-// 2. general -> schedule + cancel
-// 3. group + no pending -> schedule
-// 4. group + pending -> schedule min(pending, new)
-
-// on general timer expiration:
-// send report with all records
-
-// on group timer expiration:
-// send report with one record if exists
-
 void IGMPClient::push(int, Packet* p) {
+	if (p->ip_header_length() > 5 && *(p->data() + p->ip_header_length() - 4) ==  ){
+
+	}
 	// TODO good packet
 	auto query = (QueryMessage*) (((click_ip*) p->data()) + 1);
 
-	if (!state->hasState()) return;
-//	auto delay = (float) rand() / (float) RAND_MAX * query->maxRespTime();
-	auto delay = 1;
+	if (query->type != QUERY ||
+	    !click_in_chksum((const unsigned char*) query, sizeof(QueryMessage))) {
+		p->kill();
+		return;
+	}
+
+	qrv = query->qrv ? query->qrv : 2u;
+
+	//	if (!state->hasState()) return;
+	auto delay = (float) rand() / (float) RAND_MAX * query->maxRespTime();
 
 	if (generalTimer->scheduled() &&
 	    generalTimer->expiry_steady() - Timestamp::now_steady() < delay) {
 		return;
 	} else if (query->groupAddress == 0) {
 		generalTimer->schedule_after_msec(delay);
-		// TODO assign
 	} else if (!groupTimers.count(query->groupAddress)) {
+		auto report = new ScheduledGroupReport{ this, query->groupAddress };
+		auto timer  = new Timer(&handleGroupReport, (void*) report);
+		timer->initialize(this);
+		timer->schedule_after_msec(delay);
+		groupTimers[query->groupAddress] = timer;
+	} else if (groupTimers[query->groupAddress]->expiry_steady() - Timestamp::now_steady() >
+	           delay) {
 		groupTimers[query->groupAddress]->schedule_after_msec(delay);
-		// TODO assign
-	} else if (groupTimers[query->groupAddress]->expiry_steady() - Timestamp::now_steady() > delay){
-		groupTimers[query->groupAddress]->schedule_after_msec(delay);
-		// TODO assign
 	}
 }
 
@@ -108,35 +108,37 @@ void IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress address) 
 	}
 	memset(packet->data(), 0, packet->length());
 
-	auto header  = (ReportMessage*) packet->data();
-	header->type = REPORT;
-	// TODO try without htons and wireshark
+	auto header             = (ReportMessage*) packet->data();
+	header->type            = REPORT;
 	header->NumGroupRecords = htons(1);
 
 	auto record              = (GroupRecord*) (header + 1);
 	record->recordType       = type;
 	record->multicastAddress = address.in_addr();
 
-	header->checksum = click_in_cksum((const unsigned char*) (header),
-	                                  sizeof(ReportMessage) + sizeof(GroupRecord));
+	header->checksum =
+		click_in_cksum((const unsigned char*) header, sizeof(ReportMessage) + sizeof(GroupRecord));
 
 	output(0).push(packet->clone());
-	printMessage(std::to_string(qrv - 1) + " remaining", (ReportMessage*) header);
+	printMessage(std::to_string(qrv - 1) + " remaining", header);
 
-	auto iter = ChangeTimers.find(address);
-	if (iter != ChangeTimers.end()) { (*iter).second->clear(); }
+	auto iter = changeTimers.find(address);
+	if (iter != changeTimers.end()) {
+		(*iter).second->clear();
+		delete (*iter).second;
+	}
 
 	if (qrv <= 1) return;
 
-	auto* timerdata = new ScheduledReport{ this, packet, qrv - 1 };
-	auto* timer     = new Timer(&handleReport, timerdata);
+	auto timerdata = new ScheduledChangeReport{ this, packet, qrv - 1 };
+	auto timer     = new Timer(&handleChangeReport, timerdata);
 	timer->initialize(this);
 	timer->schedule_after_msec((float) rand() / (float) RAND_MAX * unsolicitedReportInterval);
-	ChangeTimers[address] = timer;
+	changeTimers[address] = timer;
 }
 
-void IGMPClient::handleReport(Timer* timer, void* data) {
-	auto* report = (ScheduledReport*) data;
+void IGMPClient::handleChangeReport(Timer* timer, void* data) {
+	auto* report = (ScheduledChangeReport*) data;
 	assert(report);
 	report->client->output(0).push(report->packet->clone());
 	printMessage(std::to_string(report->remaining - 1) + " remaining",
@@ -147,6 +149,72 @@ void IGMPClient::handleReport(Timer* timer, void* data) {
 	}
 	timer->schedule_after_msec((float) rand() / (float) RAND_MAX *
 	                           report->client->unsolicitedReportInterval);
+}
+
+void IGMPClient::handleGeneralReport(Timer* timer, void* data) {
+	auto client = (IGMPClient*) data;
+	assert(client);
+	timer->clear();
+
+	if (!client->state->hasState()) return;
+
+	auto packet =
+		Packet::make(sizeof(click_ether) + sizeof(click_ip), 0,
+	                 sizeof(ReportMessage) + sizeof(GroupRecord) * client->state->size(), 0);
+	if (!packet) {
+		click_chatter("Could not allocate packet");
+		return;
+	}
+	memset(packet->data(), 0, packet->length());
+
+	auto header             = (ReportMessage*) packet->data();
+	header->type            = REPORT;
+	header->NumGroupRecords = htons(client->state->size());
+
+	auto record = (GroupRecord*) (header + 1);
+	for (const auto& address : *client->state) {
+		record->recordType       = MODE_IS_EXCLUDE;
+		record->multicastAddress = address.in_addr();
+		record++;
+	}
+
+	header->checksum =
+		click_in_cksum((const unsigned char*) header,
+	                   sizeof(ReportMessage) + sizeof(GroupRecord) * client->state->size());
+	client->output(0).push(packet);
+	printMessage("General", header);
+}
+
+void IGMPClient::handleGroupReport(Timer* timer, void* data) {
+	auto report = (ScheduledGroupReport*) data;
+	assert(report);
+
+	timer->clear();
+	delete timer;
+	report->client->groupTimers.erase(report->address);
+
+	if (!report->client->state->hasAddress(report->address)) return;
+
+	auto packet = Packet::make(sizeof(click_ether) + sizeof(click_ip), 0,
+	                           sizeof(ReportMessage) + sizeof(GroupRecord), 0);
+	if (!packet) {
+		click_chatter("Could not allocate packet");
+		return;
+	}
+	memset(packet->data(), 0, packet->length());
+
+	auto header             = (ReportMessage*) packet->data();
+	header->type            = REPORT;
+	header->NumGroupRecords = htons(1);
+
+	auto record              = (GroupRecord*) (header + 1);
+	record->recordType       = MODE_IS_EXCLUDE;
+	record->multicastAddress = report->address;
+
+	header->checksum =
+		click_in_cksum((const unsigned char*) header, sizeof(ReportMessage) + sizeof(GroupRecord));
+	report->client->output(0).push(packet);
+	printMessage("Group", header);
 }
 
 void printMessage(std::string front, ReportMessage* message) {

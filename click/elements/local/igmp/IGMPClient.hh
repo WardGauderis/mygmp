@@ -31,15 +31,22 @@ private:
 
 	Timer*                                      generalTimer;
 	std::unordered_map<IPAddress, Timer*, Hash> groupTimers;
-	std::unordered_map<IPAddress, Timer*, Hash> ChangeTimers;
+	std::unordered_map<IPAddress, Timer*, Hash> changeTimers;
 
-	struct ScheduledReport {
+	struct ScheduledChangeReport {
 		IGMPClient* client;
 		Packet*     packet;
 		uint32_t    remaining;
 	};
 
-	static void handleReport(Timer* timer, void* data);
+	struct ScheduledGroupReport {
+		IGMPClient* client;
+		IPAddress   address;
+	};
+
+	static void handleChangeReport(Timer* timer, void* data);
+	static void handleGeneralReport(Timer* timer, void* data);
+	static void handleGroupReport(Timer* timer, void* data);
 };
 
 void printMessage(std::string front, ReportMessage* message);
