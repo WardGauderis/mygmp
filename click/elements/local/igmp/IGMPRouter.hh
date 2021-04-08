@@ -1,5 +1,5 @@
-#ifndef CLICK_IGMPROUTERELEMENT_H
-#define CLICK_IGMPROUTERELEMENT_H
+#ifndef IGMPCLIENT_HH
+#define IGMPROUTER_HH
 
 #include <click/element.hh>
 #include "IGMPRouterState.hh"
@@ -10,6 +10,7 @@
 
 // terminated group membership report -> query network before deleting group
 
+CLICK_DECLS
 class IGMPRouter : public Element {
 public:
     const char* class_name() const override { return "IGMPRouter"; }
@@ -24,8 +25,9 @@ public:
     void sendQuery();
 
 private:
-    IGMPRouterState* state;
+//    IGMPRouterState* state;
 };
+CLICK_ENDDECLS
 
 
-#endif //CLICK_IGMPROUTERELEMENT_H
+#endif //IGMPROUTER_HH

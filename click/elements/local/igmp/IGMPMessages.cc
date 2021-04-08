@@ -2,7 +2,7 @@
 
 uint32_t QueryMessage::maxRespTime() const { return U8toU32(maxRespCode); }
 
-uint32_t QueryMessage::QQI() const { return qqic ? U8toU32(qqic) : QQI_DEFAULT }
+uint32_t QueryMessage::QQI() const { return qqic ? U8toU32(qqic) : QQI_DEFAULT; }
 
 QueryMessage createGeneralQuery() {
 	/* A "General Query" is sent by a multicast router to learn the

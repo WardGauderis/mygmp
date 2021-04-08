@@ -42,7 +42,8 @@ void IGMPClient::push(int, Packet* p) {
 	auto query = (QueryMessage*) (((click_ip*) p->data()) + 1);
 
 	if (!state->hasState()) return;
-	auto delay = (float) rand() / (float) RAND_MAX * query->maxRespTime();
+//	auto delay = (float) rand() / (float) RAND_MAX * query->maxRespTime();
+	auto delay = 1;
 
 	if (generalTimer->scheduled() &&
 	    generalTimer->expiry_steady() - Timestamp::now_steady() < delay) {
