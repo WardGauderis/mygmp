@@ -1,5 +1,5 @@
 require(library definitions.click)
-RatedSource("data", 1, -1, true)
+RatedSource("blblaaaa", 1, -1, true)
 -> IPEncap(2, client21_address, 224.0.0.22, TTL 1)
 -> AlertEncap
 -> IPPrint

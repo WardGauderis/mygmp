@@ -90,6 +90,16 @@ public:
     // Queries sent before the router assumes there are no listeners for a
     // particular source.  Default: the Robustness Variable.
     uint32_t lastMemberQueryCount = robustness;
+
+    // The Last Member Query Time is the time value represented by the Last
+    // Member Query Interval, multiplied by the Last Member Query Count.
+    uint32_t lastMemberQueryTime = lastMemberQueryInterval * lastMemberQueryCount;
+
+    // The Unsolicited Report Interval is the time between repetitions of a
+    // host’s initial report of membership in a group.  Default: 1 second.
+    uint32_t unsolicitedReportInterval = 1;
+
+
 };
 
 CLICK_ENDDECLS
