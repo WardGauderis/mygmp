@@ -38,7 +38,7 @@ void AlertEncap::push(int, Packet* packet)
 
     // this works in increments of 4, which is the size of the option
     new_header->ip_hl++;
-    new_header->ip_len += sizeof(option);
+    new_header->ip_len = htons(new_header->ip_len + sizeof(option));
 
     // we need to set the checksum as zero before calculating it
     new_header->ip_sum = 0;
