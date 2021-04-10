@@ -26,18 +26,21 @@ void IGMPClient::add_handlers() {
 }
 
 void IGMPClient::push(int, Packet* p) {
+	click_chatter("AAAAAAAAAA");
 	RouterAlertOption option{};
-	if (p->ip_header_length() > 5 &&
-	    !memcmp((p->data() + p->ip_header_length() - 4), &option, sizeof(RouterAlertOption))) {
+	if (!(p->ip_header_length() > 5*4 &&
+	    !memcmp((p->data() + p->ip_header_length() - 4), &option, sizeof(RouterAlertOption)))) {
 		p->kill();
+		click_chatter("Dropped packet without alert option");
 		return;
 	}
 
-	auto query = (QueryMessage*) (((click_ip*) p->data()) + 1);
+	auto query = (QueryMessage*) (((const unsigned char*) (((click_ip*) p->data()) + 1)) + 4);
 
 	if (query->type != QUERY ||
-	    !click_in_cksum((const unsigned char*) query, sizeof(QueryMessage))) {
+	    click_in_cksum((const unsigned char*) query, sizeof(QueryMessage))) {
 		p->kill();
+		click_chatter("Dropped non-query/wrong checksum packet.");
 		return;
 	}
 

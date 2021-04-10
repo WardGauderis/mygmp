@@ -11,7 +11,7 @@ elementclass Client {
 		-> rt :: StaticIPLookup(
 					$address:ip/32 0,
 					$address:ipnet 0,
-					244.0.0.0/4 2,
+					224.0.0.0/4 2,
 					0.0.0.0/0.0.0.0 $gateway 1)
 		-> [1]output;
 
