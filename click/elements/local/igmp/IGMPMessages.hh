@@ -4,6 +4,7 @@
 #include <click/element.hh>
 #include <cstdint>
 #include <click/ipaddress.hh>
+#include <algorithm>
 
 inline uint32_t U8toU32(uint8_t byte) {
 	if (byte < 128) {
@@ -15,6 +16,19 @@ inline uint32_t U8toU32(uint8_t byte) {
 		return (mant | 0x10) << (exp + 3);
 	}
 }
+
+inline uint8_t U32toU8(uint32_t u32) {
+	if (u32 < 128) return u32;
+	u32 = std::min(u32, 31744u);
+
+	uint32_t index = 31;
+	while ((u32 & 1 << index) == 0) {
+		--index;
+	}
+
+	return 0x80 | (((index - 7) & 0x7) << 4) | (u32 >> (index - 4)) & 0xF;
+}
+
 
 // https://tools.ietf.org/html/rfc2113
 struct RouterAlertOption {
