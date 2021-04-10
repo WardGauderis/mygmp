@@ -26,7 +26,6 @@ void IGMPClient::add_handlers() {
 }
 
 void IGMPClient::push(int, Packet* p) {
-	click_chatter("AAAAAAAAAA");
 	RouterAlertOption option{};
 	if (!(p->ip_header_length() > 5*4 &&
 	    !memcmp((p->data() + p->ip_header_length() - 4), &option, sizeof(RouterAlertOption)))) {
