@@ -10,9 +10,11 @@ class IGMPRouterFilter : public Element {
 public:
     const char *class_name() const override { return "IGMPRouterFilter"; }
 
-    const char *port_count() const override { return "-/="; }
+    const char *port_count() const override { return "1/-"; }
 
     const char *processing() const override { return PUSH; }
+
+    int configure(Vector<String> &, ErrorHandler *) override;
 
     void push(int, Packet *) override;
 

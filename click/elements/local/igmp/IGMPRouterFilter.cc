@@ -1,7 +1,21 @@
 #include <click/config.h>
+#include <click/args.hh>
+#include <click/error.hh>
 #include "IGMPRouterFilter.hh"
 
 CLICK_DECLS
+int IGMPRouterFilter::configure(Vector<String> &conf, ErrorHandler *errh) {
+    if (Args(conf, this, errh)
+            .read_mp("STATE", ElementCastArg("IGMPRouterState"), state)
+            .complete()) {
+        return errh->error("Could not parse IGMPRouterState");
+    }
+
+    // TODO: general queries??
+
+    return 0;
+}
+
 void IGMPRouterFilter::push(int input, Packet *packet) {
     // Idk if this actually doesn't happen, just for safety
     if (input < 0) return;
@@ -16,7 +30,7 @@ void IGMPRouterFilter::push(int input, Packet *packet) {
         auto &group = interface.second[address];
 
         // Check if someone wants this by looking if mode for group is exclude
-        if (std::get<2>(group)) {
+        if (group.isExclude) {
             output(int(interface.first)).push(packet);
         }
     }

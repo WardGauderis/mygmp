@@ -14,10 +14,14 @@
 // using Sources = std::unordered_map<IPAddress, Timer*, Hash>;
 // we can simplify this by not storing the sources and only keeping a timer
 
-using State = std::tuple<Timer *, Timer *, bool>;
+struct GroupData
+{
+    Timer* groupTimer;
+    bool isExclude;
+};
 
-// group address -> (group timer, sources, is exclude)
-using Groups = std::unordered_map<IPAddress, State, Hash>;
+// group address -> state
+using Groups = std::unordered_map<IPAddress, GroupData, Hash>;
 
 // interface id -> group
 using Interfaces = std::unordered_map<uint32_t, Groups>;
@@ -35,9 +39,7 @@ public:
     // running, switch to  INCLUDE filter-mode using those source
     // records with running timers as the INCLUDE source record state.
 
-    void resetGroupExpire(uint32_t interface, IPAddress group);
 
-    static void groupExpire(Timer *timer, void *data);
 
     Interfaces interfaces;
 
@@ -49,7 +51,7 @@ public:
 
     // The Query Interval is the interval between General Queries sent by the Querier.
     // Default: 125 seconds.
-    uint32_t queryInterval = 125;
+    uint32_t queryInterval = 1250; // we use intervals of 100 msec so this is larger
 
     // Query Response Interval
     // The Max Response Time used to calculate the Max Resp Code inserted into the periodic General Queries.
@@ -74,7 +76,7 @@ public:
 
     // The Startup Query Count is the number of Queries sent out on startup,
     // separated by the Startup Query Interval.
-    // efault: the Robustness Variable.
+    // Default: the Robustness Variable.
     uint32_t startupQueryCount = robustness;
 
     // The Last Member Query Interval is the Max Response Time used to
@@ -94,12 +96,6 @@ public:
     // The Last Member Query Time is the time value represented by the Last
     // Member Query Interval, multiplied by the Last Member Query Count.
     uint32_t lastMemberQueryTime = lastMemberQueryInterval * lastMemberQueryCount;
-
-    // The Unsolicited Report Interval is the time between repetitions of a
-    // host’s initial report of membership in a group.  Default: 1 second.
-    uint32_t unsolicitedReportInterval = 1;
-
-
 };
 
 CLICK_ENDDECLS

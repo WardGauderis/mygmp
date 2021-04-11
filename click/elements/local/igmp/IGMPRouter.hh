@@ -10,31 +10,40 @@
 
 // terminated group membership report -> query network before deleting group
 
+class IGMPRouter;
+
+struct TimerData {
+    IGMPRouter* self;
+    uint32_t interface;
+    IPAddress address;
+    uint32_t numResends;
+};
+
 CLICK_DECLS
 class IGMPRouter : public Element {
 public:
-    const char* class_name() const override { return "IGMPRouter"; }
-    const char* port_count() const override { return "-/="; }
-    const char* processing() const override { return PUSH; }
+    const char *class_name() const override { return "IGMPRouter"; }
 
-    int configure(Vector<String>&, ErrorHandler*) override;
+    const char *port_count() const override { return "-/="; }
 
-    void push(int, Packet*) override;
+    const char *processing() const override { return PUSH; }
 
-    void processReport(ReportMessage* report, uint32_t interface);
+    int configure(Vector<String> &, ErrorHandler *) override;
 
-    // TODO
-    // Multicast routers send General Queries periodically to request group
-    // membership information from an attached network.  These queries are
-    // used to build and refresh the group membership state of systems on
-    // attached networks.  Systems respond to these queries by reporting
-    // their group membership state (and their desired set of sources) with
-    // Current-State Group Records in IGMPv3 Membership Reports.
-    void sendQuery();
+    void push(int, Packet *) override;
+
+    void processReport(ReportMessage *report, uint32_t interface);
+
+    static void groupExpire(Timer *, void *);
+
+    static void handleResend(Timer *, void *);
+
+    static void sendGroupSpecificQuery(IGMPRouter* self, uint32_t interface, IPAddress address);
 
 private:
-    IGMPRouterState* state;
+    IGMPRouterState *state;
 };
+
 CLICK_ENDDECLS
 
 

@@ -6,14 +6,20 @@
 #include <click/ipaddress.hh>
 
 inline uint32_t U8toU32(uint8_t byte) {
-	if (byte < 128) {
-		return byte;
-	} else {
-		uint8_t exp  = (byte & 0x70) >> 4;
-		uint8_t mant = byte & 0x0F;
+	if (byte < 128) return byte;
 
-		return (mant | 0x10) << (exp + 3);
-	}
+    uint8_t exp  = (byte & 0x70) >> 4;
+    uint8_t mant = byte & 0x0F;
+    return (mant | 0x10) << (exp + 3);
+}
+
+inline uint8_t U32toU8(uint32_t value)
+{
+    if(value < 128) return value;
+
+    // TODO: inverse operation
+    click_chatter("TODO: IGMPMessages.hh");
+    return uint8_t (value);
 }
 
 // https://tools.ietf.org/html/rfc2113

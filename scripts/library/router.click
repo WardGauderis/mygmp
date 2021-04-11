@@ -16,6 +16,12 @@
 
 
 elementclass Router {
+
+    state :: IGMPRouterState;
+
+    filter :: IGMPRouterFilter(state);
+    router :: IGMPRouter(state);
+
 	$server_address, $client1_address, $client2_address |
 
 	// Shared IP input path and routing table
@@ -27,8 +33,41 @@ elementclass Router {
 					$client2_address:ip/32 0,
 					$server_address:ipnet 1,
 					$client1_address:ipnet 2,
-					$client2_address:ipnet 3);
-	
+					$client2_address:ipnet 3,
+					224.0.0.0/4 4);
+
+	rt[4]
+	    -> classifier::IPClassifier(ip proto 2, -)
+	    -> sw::PaintSwitch;
+
+	classifier[1] -> filter;
+
+	filter[0] -> server_db;
+	filter[1] -> client1_db;
+	filter[2] -> client2_db;
+
+    sw[1] -> [0]router;
+    sw[2] -> [1]router;
+    sw[3] -> [2]router;
+
+    router[0]
+        -> IPEncap(2, $server_address, 224.0.0.1, TTL 1, TOS 0xc0)
+        -> AlertEncap
+        -> FixIpDest
+        -> server_fis
+
+    router[1]
+        -> IPEncap(2, $client1_address, 224.0.0.1, TTL 1, TOS 0xc0)
+        -> AlertEncap
+        -> FixIpDest
+        -> client1_fis
+
+    router[2]
+        -> IPEncap(2, $client2_address, 224.0.0.1, TTL 1, TOS 0xc0)
+        -> AlertEncap
+        -> FixIpDest
+        -> client2_fis
+
 	// ARP responses are copied to each ARPQuerier and the host.
 	arpt :: Tee (3);
 
@@ -74,11 +113,11 @@ elementclass Router {
 	
 	// Forwarding paths per interface
 	rt[1]
-		-> DropBroadcasts
+		-> server_db :: DropBroadcasts
 		-> server_paint :: PaintTee(1)
 		-> server_ipgw :: IPGWOptions($server_address)
-		-> FixIPSrc($server_address)
 		-> server_ttl :: DecIPTTL
+		-> server_fis :: FixIPSrc($server_address)
 		-> server_frag :: IPFragmenter(1500)
 		-> server_arpq;
 	
@@ -89,11 +128,11 @@ elementclass Router {
 
 
 	rt[2]
-		-> DropBroadcasts
+		-> client1_db :: DropBroadcasts
 		-> client1_paint :: PaintTee(2)
 		-> client1_ipgw :: IPGWOptions($client1_address)
-		-> FixIPSrc($client1_address)
 		-> client1_ttl :: DecIPTTL
+		-> client1_fis :: FixIPSrc($client1_address)
 		-> client1_frag :: IPFragmenter(1500)
 		-> client1_arpq;
 	
@@ -104,11 +143,11 @@ elementclass Router {
 
 	
 	rt[3]
-		-> DropBroadcasts
+		-> client2_db :: DropBroadcasts
 		-> client2_paint :: PaintTee(2)
 		-> client2_ipgw :: IPGWOptions($client2_address)
-		-> FixIPSrc($client2_address)
 		-> client2_ttl :: DecIPTTL
+		-> client2_fis :: FixIPSrc($client2_address)
 		-> client2_frag :: IPFragmenter(1500)
 		-> client2_arpq;
 	
