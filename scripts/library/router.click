@@ -17,16 +17,11 @@
 
 elementclass Router {
 
-    state :: IGMPRouterState;
-
-    filter :: IGMPRouterFilter(state);
-    router :: IGMPRouter(state);
-
 	$server_address, $client1_address, $client2_address |
 
 	// Shared IP input path and routing table
 	ip :: Strip(14)
-		-> CheckIPHeader
+		-> checker :: CheckIPHeader
 		-> rt :: StaticIPLookup(
 					$server_address:ip/32 0,
 					$client1_address:ip/32 0,
@@ -35,38 +30,6 @@ elementclass Router {
 					$client1_address:ipnet 2,
 					$client2_address:ipnet 3,
 					224.0.0.0/4 4);
-
-	rt[4]
-	    -> classifier::IPClassifier(ip proto 2, -)
-	    -> sw::PaintSwitch;
-
-	classifier[1] -> filter;
-
-	filter[0] -> server_db;
-	filter[1] -> client1_db;
-	filter[2] -> client2_db;
-
-    sw[1] -> [0]router;
-    sw[2] -> [1]router;
-    sw[3] -> [2]router;
-
-    router[0]
-        -> IPEncap(2, $server_address, 224.0.0.1, TTL 1, TOS 0xc0)
-        -> AlertEncap
-        -> FixIpDest
-        -> server_fis
-
-    router[1]
-        -> IPEncap(2, $client1_address, 224.0.0.1, TTL 1, TOS 0xc0)
-        -> AlertEncap
-        -> FixIpDest
-        -> client1_fis
-
-    router[2]
-        -> IPEncap(2, $client2_address, 224.0.0.1, TTL 1, TOS 0xc0)
-        -> AlertEncap
-        -> FixIpDest
-        -> client2_fis
 
 	// ARP responses are copied to each ARPQuerier and the host.
 	arpt :: Tee (3);
@@ -155,4 +118,44 @@ elementclass Router {
 	client2_ipgw[1]  -> ICMPError($client2_address, parameterproblem) -> rt;
 	client2_ttl[1]   -> ICMPError($client2_address, timeexceeded) -> rt;
 	client2_frag[1]  -> ICMPError($client2_address, unreachable, needfrag) -> rt;
+
+
+	// IGMP
+    state :: IGMPRouterState;
+
+    filter :: IGMPRouterFilter(state);
+    router :: IGMPRouter(state);
+
+    rt[4]
+        -> classifier::IPClassifier(ip proto 2, -)
+        -> sw::PaintSwitch;
+
+    classifier[1] -> filter;
+
+    filter[0] -> server_db;
+    filter[1] -> client1_db;
+    filter[2] -> client2_db;
+
+    sw[0] -> Discard;
+    sw[1] -> [0]router;
+    sw[2] -> [1]router;
+    sw[3] -> [2]router;
+
+    router[0]
+        -> IPEncap(2, $server_address, 224.0.0.1, TTL 1, TOS 0xc0)
+        -> AlertEncap
+        -> FixIPDest
+        -> server_fis
+
+    router[1]
+        -> IPEncap(2, $client1_address, 224.0.0.1, TTL 1, TOS 0xc0)
+        -> AlertEncap
+        -> FixIPDest
+        -> client1_fis
+
+    router[2]
+        -> IPEncap(2, $client2_address, 224.0.0.1, TTL 1, TOS 0xc0)
+        -> AlertEncap
+        -> FixIPDest
+        -> client2_fis
 }

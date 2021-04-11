@@ -40,7 +40,7 @@ elementclass Client {
 		-> ipgw :: IPGWOptions($address)
 		-> ttl :: DecIPTTL
 	    -> fix
-		-> frag :: IPFragmenter(1500);
+		-> frag :: IPFragmenter(1500)
 		-> arpq :: ARPQuerier($address)
 		-> output;
 

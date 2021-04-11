@@ -14,15 +14,6 @@ inline uint32_t U8toU32(uint8_t byte) {
     return (mant | 0x10) << (exp + 3);
 }
 
-inline uint8_t U32toU8(uint32_t value)
-{
-    if(value < 128) return value;
-
-    // TODO: inverse operation
-    click_chatter("TODO: IGMPMessages.hh");
-    return uint8_t (value);
-}
-
 inline uint8_t U32toU8(uint32_t u32) {
 	if (u32 < 128) return u32;
 	u32 = std::min(u32, 31744u);

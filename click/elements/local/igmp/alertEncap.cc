@@ -12,7 +12,7 @@ void AlertEncap::push(int, Packet* packet)
     const auto length = header->ip_hl * 4u;
 
     const auto option = RouterAlertOption{};
-    auto new_packet = Packet::make(sizeof(click_ether), nullptr, packet->length() + sizeof(option), 0);
+    auto new_packet = Packet::make(sizeof(click_ether) + 4, nullptr, packet->length() + sizeof(option), 0);
 
     // add the ip header
     memcpy(new_packet->data(), packet->data(), length);
