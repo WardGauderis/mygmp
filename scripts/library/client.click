@@ -24,7 +24,7 @@ elementclass Client {
 	    -> igmp::IGMPClient(state)
 	    -> IPEncap(2, $address, 224.0.0.22, TTL 1, TOS 0xc0)
 	    -> AlertEncap
-		-> arpq :: ARPQuerier($address);
+	    -> fix::FixIPSrc($address);
 
 	classifier[1]
 	    -> filter::IGMPClientFilter(state)
@@ -38,10 +38,10 @@ elementclass Client {
 	rt[1]
 		-> DropBroadcasts
 		-> ipgw :: IPGWOptions($address)
-		-> FixIPSrc($address)
 		-> ttl :: DecIPTTL
-		-> frag :: IPFragmenter(1500)
-		-> arpq
+	    -> fix
+		-> frag :: IPFragmenter(1500);
+		-> arpq :: ARPQuerier($address)
 		-> output;
 
 	ipgw[1] -> ICMPError($address, parameterproblem) -> output;
