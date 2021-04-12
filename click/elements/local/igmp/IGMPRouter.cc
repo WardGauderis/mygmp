@@ -65,7 +65,7 @@ void IGMPRouter::processReport(ReportMessage *report, uint32_t interface) {
 			// and hasn't yet started the procedure to remedy this.
 
             // create the timer state
-            auto data = new TimerData{this, interface, address, state->lastMemberQueryCount - 1};
+            auto data = new TimerData{this, interface, address, state->lastMemberQueryCount};
 
             // this useful comment tells you the next line sends a group specific query
             auto timer = new Timer(IGMPRouter::handleResend, data);

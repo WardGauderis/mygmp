@@ -24,7 +24,9 @@ void FixIPDest::push(int, Packet* p) {
 
     click_chatter("ip dest fixer new ip: %s", IPAddress(dest).unparse().c_str());
     ip->ip_dst = dest;
-    ip->ip_sum = click_in_cksum((unsigned char*)(ip), (int)ip->ip_hl << 2);
+
+	ip->ip_sum = 0;
+    ip->ip_sum = click_in_cksum((unsigned char*)(ip), int(packet->ip_header_length()));
 
     packet->set_dst_ip_anno(dest);
     output(0).push(packet);
