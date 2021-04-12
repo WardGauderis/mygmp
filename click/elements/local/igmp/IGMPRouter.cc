@@ -61,7 +61,7 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 		const auto   address = IPAddress(record->multicastAddress);
 
 		// check if host asked for a valid multicast address
-		if(address.is_multicast()) continue;
+		if(!address.is_multicast()) continue;
 
 		// create the group if it doesn't exist
 		if (state->interfaces[interface].find(address) == state->interfaces[interface].end()) {
