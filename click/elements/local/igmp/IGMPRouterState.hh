@@ -33,14 +33,6 @@ public:
 
     const char *port_count() const override { return "0"; }
 
-    //// if timer == 0 and mode == exclude
-    // No more listeners to group. If all source timers have expired then
-    // delete Group Record. If there are still source record timers
-    // running, switch to  INCLUDE filter-mode using those source
-    // records with running timers as the INCLUDE source record state.
-
-
-
     Interfaces interfaces;
 
     // The Robustness Variable allows tuning for the expected packet loss on a network.
@@ -50,8 +42,8 @@ public:
     uint32_t robustness = 2;
 
     // The Query Interval is the interval between General Queries sent by the Querier.
-    // Default: 125 seconds.
-    uint32_t queryInterval = 10; // we use intervals of 100 msec so this is larger
+    // Default: 1250 (125 seconds)
+    uint32_t queryInterval = 10;
 
     // Query Response Interval
     // The Max Response Time used to calculate the Max Resp Code inserted into the periodic General Queries.
