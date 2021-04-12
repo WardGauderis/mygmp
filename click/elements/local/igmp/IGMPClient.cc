@@ -150,7 +150,7 @@ void IGMPClient::handleChangeReport(Timer* timer, void* data) {
 	auto* report = (ScheduledChangeReport*) data;
 	assert(report);
 	report->client->output(0).push(report->packet->clone());
-	printMessage(std::to_string(report->remaining - 1) + " remaining",
+	printMessage("Interface Change: " + std::to_string(report->remaining - 1) + " remaining",
 	             (ReportMessage*) report->packet->data());
 	if (--report->remaining <= 0) {
 		timer->clear();
