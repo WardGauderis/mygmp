@@ -26,7 +26,7 @@ void IGMPRouterFilter::push(int input, Packet *packet) {
 
     for (auto &interface: state->interfaces) {
         // This means this specific interface doesn't recognise the group address.
-        if (interface.second.find(address) == interface.second.end()) return;
+        if (interface.second.find(address) == interface.second.end()) continue;
 
         auto& group = interface.second[address];
         click_chatter("in filter: %s -> %s", address.unparse().c_str(), group.isExclude ? "true" : "false");

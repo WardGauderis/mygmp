@@ -22,7 +22,6 @@ void FixIPDest::push(int, Packet* p) {
 
     if (!dest.s_addr) return output(0).push(p);
 
-    click_chatter("ip dest fixer new ip: %s", IPAddress(dest).unparse().c_str());
     ip->ip_dst = dest;
 
 	ip->ip_sum = 0;
