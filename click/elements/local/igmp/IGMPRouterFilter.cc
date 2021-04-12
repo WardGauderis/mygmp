@@ -19,6 +19,7 @@ int IGMPRouterFilter::configure(Vector<String> &conf, ErrorHandler *errh) {
 void IGMPRouterFilter::push(int input, Packet *packet) {
     // Idk if this actually doesn't happen, just for safety
     if (input < 0) return;
+	click_chatter("router filter received packet on interface %u", input);
 
     // group address
     auto address = IPAddress(packet->ip_header()->ip_dst);
