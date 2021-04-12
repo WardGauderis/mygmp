@@ -34,9 +34,10 @@ void IGMPRouter::push(int input, Packet* packet) {
 		return;
 	}
 	// check for bad checksum
-	if (click_in_cksum((const unsigned char*) report, sizeof(ReportMessage))) {
+	auto length = sizeof(ReportMessage) + ntohs(report->NumGroupRecords) * sizeof(GroupRecord);
+	if (click_in_cksum((const unsigned char*) report, int(length))) {
 		packet->kill();
-		click_chatter("Dropped wrong checksum packet.");
+		click_chatter("Dropped wrong checksum packet in router.");
 		return;
 	}
 	// check for report

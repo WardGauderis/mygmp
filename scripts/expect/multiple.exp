@@ -1,0 +1,38 @@
+#!/usr/bin/expect
+
+spawn telnet localhost 10003
+send "write client21/igmp.join 225.1.1.1\r"
+expect "200"
+close
+
+spawn telnet localhost 10004
+send "write client22/igmp.join 225.1.1.1\r"
+expect "200"
+close
+
+spawn telnet localhost 10005
+send "write client31/igmp.join 225.1.1.1\r"
+expect "200"
+close
+
+spawn telnet localhost 10006
+send "write client32/igmp.join 225.1.1.1\r"
+expect "200"
+close
+
+sleep 2
+
+spawn telnet localhost 10003
+send "write client21/igmp.leave 225.1.1.1\r"
+expect "200"
+close
+
+spawn telnet localhost 10006
+send "write client32/igmp.leave 225.1.1.1\r"
+expect "200"
+close
+
+spawn telnet localhost 10005
+send "write client31/igmp.leave 225.1.1.1\r"
+expect "200"
+close
