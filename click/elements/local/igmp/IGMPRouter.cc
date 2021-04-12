@@ -85,7 +85,7 @@ void IGMPRouter::groupExpire(Timer *timer, void *data) {
     auto* state = (std::pair <Groups*, IPAddress> *) data;
 
     // for safety
-	click_chatter("delete %s", state->second.unparse().c_str());
+	click_chatter("removed group %s", state->second.unparse().c_str());
     (*state->first)[state->second].isExclude = false;
 
     // remove the group record
@@ -96,12 +96,10 @@ void IGMPRouter::handleResend(Timer *timer, void *data) {
     // interface, ip address, num resends left
     auto values = (TimerData *) (data);
 
-    click_chatter("in timer function %u", values->numResends);
+    values->numResends--;
     if (values->numResends == 0) return;
 
     sendGroupSpecificQuery(values->self, values->interface, values->address);
-    values->numResends--;
-
     timer->schedule_after_msec(values->self->state->lastMemberQueryInterval * 100);
 }
 
@@ -116,8 +114,6 @@ void IGMPRouter::sendGroupSpecificQuery(IGMPRouter *self, uint32_t interface, IP
                             U32toU8(self->state->queryInterval),
                             0
     };
-
-    click_chatter("send specific query on interface: %u", interface);
 
     msg.checksum = click_in_cksum((const unsigned char*)(&msg), sizeof(QueryMessage));
     auto packet = Packet::make(sizeof(click_ether) + sizeof(click_ip), &msg, sizeof(msg), 0);
