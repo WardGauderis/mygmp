@@ -21,17 +21,18 @@ void IGMPRouterFilter::push(int input, Packet *packet) {
     if (input < 0) return;
 
     // group address
-    auto address = packet->ip_header()->ip_dst;
+    auto address = IPAddress(packet->ip_header()->ip_dst);
 
     for (auto &interface: state->interfaces) {
         // This means this specific interface doesn't recognise the group address.
         if (interface.second.find(address) == interface.second.end()) return;
 
-        auto &group = interface.second[address];
+        auto& group = interface.second[address];
+        click_chatter("in filter: %s -> %s", address.unparse().c_str(), group.isExclude ? "true" : "false");
 
         // Check if someone wants this by looking if mode for group is exclude
         if (group.isExclude) {
-            output(int(interface.first)).push(packet);
+            output(int(interface.first)).push(packet->clone());
         }
     }
 }

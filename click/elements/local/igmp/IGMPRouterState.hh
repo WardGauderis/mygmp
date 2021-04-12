@@ -51,12 +51,12 @@ public:
 
     // The Query Interval is the interval between General Queries sent by the Querier.
     // Default: 125 seconds.
-    uint32_t queryInterval = 1250; // we use intervals of 100 msec so this is larger
+    uint32_t queryInterval = 10; // we use intervals of 100 msec so this is larger
 
     // Query Response Interval
     // The Max Response Time used to calculate the Max Resp Code inserted into the periodic General Queries.
     // Default: 100 (10 seconds)
-    uint32_t queryResponseInterval = 100;
+    uint32_t queryResponseInterval = 10;
 
     // The Group Membership Interval is the amount of time that must pass
     // before a multicast router decides there are no more members of a

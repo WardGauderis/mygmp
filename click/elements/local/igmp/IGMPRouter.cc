@@ -6,7 +6,7 @@
 #include "IGMPRouter.hh"
 
 CLICK_DECLS
-int IGMPRouter::configure(Vector<String> &conf, ErrorHandler *errh) {
+int IGMPRouter::configure(Vector <String> &conf, ErrorHandler *errh) {
     if (Args(conf, this, errh)
             .read_mp("STATE", ElementCastArg("IGMPRouterState"), state)
             .complete()) {
@@ -30,33 +30,40 @@ void IGMPRouter::push(int input, Packet *packet) {
 void IGMPRouter::processReport(ReportMessage *report, uint32_t interface) {
     if (report->type != REPORT) return;
 
+
     // create the interface if it doesn't exist
     if (state->interfaces.find(interface) == state->interfaces.end())
         state->interfaces.emplace(interface, Groups{});
 
-    for (auto i = 0; i < report->NumGroupRecords; i++) {
-        GroupRecord *record = (GroupRecord *) (report + sizeof(ReportMessage)) + i;
-        const auto address = record->multicastAddress;
+    for (auto i = 0; i < ntohs(report->NumGroupRecords); i++) {
+        GroupRecord *record = ((GroupRecord *) (report + 1)) + i;
+        const auto address = IPAddress(record->multicastAddress);
+
+        // click_chatter("%s", address.unparse().c_str());
 
         // create the group if it doesn't exist
         if (state->interfaces[interface].find(address) == state->interfaces[interface].end()) {
-            auto data = new std::pair<Groups, IPAddress>(state->interfaces[interface], address);
+            auto data = new std::pair<Groups*, IPAddress>(&state->interfaces[interface], address);
             auto timer = new Timer(IGMPRouter::groupExpire, data);
 
             timer->initialize(this);
-            timer->schedule_after_msec(state->groupMembershipInterval * 100);
-
             state->interfaces[interface].emplace(address, GroupData{timer, false});
         }
 
-        auto group = state->interfaces[interface][address];
+        auto &group = state->interfaces[interface][address];
 
         if (record->recordType == RecordType::MODE_IS_EXCLUDE or
             record->recordType == RecordType::CHANGE_TO_EXCLUDE_MODE) {
             // Exclude {} -> Someone wants to listen so we set it to true
             group.isExclude = true;
 
-        } else if(group.isExclude) {
+			// Cancel every timer as we know at least someone is listening
+            group.groupTimer->clear();
+
+        } else if (group.isExclude and not group.groupTimer->scheduled()) {
+			// this is only triggered when the router doesn't know if someone is listening
+			// and hasn't yet started the procedure to remedy this.
+
             // create the timer state
             auto data = new TimerData{this, interface, address, state->lastMemberQueryCount - 1};
 
@@ -68,23 +75,28 @@ void IGMPRouter::processReport(ReportMessage *report, uint32_t interface) {
             timer->schedule_after_msec(0);
 
             // change group timer value
-            group.groupTimer->schedule_after_msec(state->lastMemberQueryTime * 100);
+            group.groupTimer->schedule_after_msec(state->groupMembershipInterval * 100);
         }
         // If the mode is already include we don't have to worry about anything :)
     }
 }
 
 void IGMPRouter::groupExpire(Timer *timer, void *data) {
-    auto state = (std::pair<Groups, IPAddress>*) data;
+    auto* state = (std::pair <Groups*, IPAddress> *) data;
+
+    // for safety
+	click_chatter("delete %s", state->second.unparse().c_str());
+    (*state->first)[state->second].isExclude = false;
 
     // remove the group record
-    state->first.erase(state->second);
+    state->first->erase(state->second);
 }
 
 void IGMPRouter::handleResend(Timer *timer, void *data) {
     // interface, ip address, num resends left
     auto values = (TimerData *) (data);
 
+    click_chatter("in timer function %u", values->numResends);
     if (values->numResends == 0) return;
 
     sendGroupSpecificQuery(values->self, values->interface, values->address);
@@ -104,8 +116,13 @@ void IGMPRouter::sendGroupSpecificQuery(IGMPRouter *self, uint32_t interface, IP
                             U32toU8(self->state->queryInterval),
                             0
     };
+
+    click_chatter("send specific query on interface: %u", interface);
+
+    msg.checksum = click_in_cksum((const unsigned char*)(&msg), sizeof(QueryMessage));
     auto packet = Packet::make(sizeof(click_ether) + sizeof(click_ip), &msg, sizeof(msg), 0);
-    self->output(interface).push(packet);
+
+    self->output(int(interface)).push(packet);
 }
 
 CLICK_ENDDECLS

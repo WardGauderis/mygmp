@@ -15,13 +15,14 @@ int FixIPDest::configure(Vector<String>& conf, ErrorHandler* errh) {
 
 void FixIPDest::push(int, Packet* p) {
     auto packet = p->uniqueify();
-    auto ip     = packet->ip_header();
 
-    auto query = (QueryMessage*) (((const unsigned char*) (ip)) + 4);
+	auto ip = (click_ip*)(packet->data());
+    auto query = (QueryMessage*) (packet->data() + packet->ip_header_length());
     auto dest = query->groupAddress;
 
     if (!dest.s_addr) return output(0).push(p);
 
+    click_chatter("ip dest fixer new ip: %s", IPAddress(dest).unparse().c_str());
     ip->ip_dst = dest;
     ip->ip_sum = click_in_cksum((unsigned char*)(ip), (int)ip->ip_hl << 2);
 
