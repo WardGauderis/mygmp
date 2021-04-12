@@ -14,7 +14,7 @@ int IGMPClient::configure(Vector<String>& conf, ErrorHandler* errh) {
 		return errh->error("Could not parse IGMPClientState");
 	}
 
-	generalTimer = new Timer(&handleChangeReport, (void*) this);
+	generalTimer = new Timer(&handleGeneralReport, (void*) this);
 	generalTimer->initialize(this);
 
 	return 0;
