@@ -13,7 +13,12 @@ int IGMPRouter::configure(Vector<String>& conf, ErrorHandler* errh) {
 		return errh->error("Could not parse IGMPRouterState");
 	}
 
-	// TODO: general queries??
+	auto data  = new std::pair<IGMPRouter*, uint32_t>(this, state->startupQueryCount);
+	auto timer = new Timer(IGMPRouter::handleGeneralResend, data);
+
+	// Weird trick with the direct schedule to reduce code duplication
+	timer->initialize(this);
+	timer->schedule_after_msec(0);
 
 	return 0;
 }
@@ -46,7 +51,7 @@ void IGMPRouter::push(int input, Packet* packet) {
 		return;
 	}
 
-    // process and kill packet
+	// process and kill packet
 	processReport(report, static_cast<uint32_t>(input));
 	packet->kill();
 }
@@ -61,7 +66,7 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 		const auto   address = IPAddress(record->multicastAddress);
 
 		// check if host asked for a valid multicast address
-		if(!address.is_multicast()) continue;
+		if (!address.is_multicast()) continue;
 
 		// create the group if it doesn't exist
 		if (state->interfaces[interface].find(address) == state->interfaces[interface].end()) {
@@ -89,8 +94,9 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 			// create the timer state
 			auto data = new TimerData{ this, interface, address, state->lastMemberQueryCount };
 
-			// this useful comment tells you the next line start a timer that sends a group specific query
-			auto timer = new Timer(IGMPRouter::handleResend, data);
+			// this useful comment tells you the next line start a timer that sends a group specific
+			// query
+			auto timer = new Timer(IGMPRouter::handleSpecificResend, data);
 
 			// timer of 0 seconds may sound weird but it avoids a lot of code duplication
 			timer->initialize(this);
@@ -114,7 +120,7 @@ void IGMPRouter::groupExpire(Timer* timer, void* data) {
 	state->first->erase(state->second);
 }
 
-void IGMPRouter::handleResend(Timer* timer, void* data) {
+void IGMPRouter::handleSpecificResend(Timer* timer, void* data) {
 	auto values = (TimerData*) (data);
 
 	values->numResends--;
@@ -124,11 +130,35 @@ void IGMPRouter::handleResend(Timer* timer, void* data) {
 	timer->schedule_after_msec(values->self->state->lastMemberQueryInterval * 100);
 }
 
+void IGMPRouter::handleGeneralResend(Timer* timer, void* data) {
+	auto* state = (std::pair<IGMPRouter*, uint32_t>*) (data);
+	sendGeneralQueries(state->first);
+
+	if (state->second > 0) {
+		state->second--;
+		timer->schedule_after_msec(state->first->state->startupQueryInterval * 100);
+	} else {
+		timer->schedule_after_msec(state->first->state->queryInterval * 100);
+	}
+}
+
 void IGMPRouter::sendGroupSpecificQuery(IGMPRouter* self, uint32_t interface, IPAddress address) {
+	auto msg = QueryMessage{
+		MessageType::QUERY,      U32toU8(self->state->lastMemberQueryInterval), 0, address, 0, 0,
+		self->state->robustness, U32toU8(self->state->queryInterval),           0
+	};
+
+	msg.checksum = click_in_cksum((const unsigned char*) (&msg), sizeof(QueryMessage));
+	auto packet  = Packet::make(sizeof(click_ether) + sizeof(click_ip), &msg, sizeof(msg), 0);
+
+	self->output(int(interface)).push(packet);
+}
+
+void IGMPRouter::sendGeneralQueries(IGMPRouter* self) {
 	auto msg = QueryMessage{ MessageType::QUERY,
+		                     U32toU8(self->state->queryResponseInterval),
 		                     0,
-		                     0,
-		                     address,
+		                     0,    // address is 0 in general query
 		                     0,
 		                     0,
 		                     self->state->robustness,
@@ -138,7 +168,8 @@ void IGMPRouter::sendGroupSpecificQuery(IGMPRouter* self, uint32_t interface, IP
 	msg.checksum = click_in_cksum((const unsigned char*) (&msg), sizeof(QueryMessage));
 	auto packet  = Packet::make(sizeof(click_ether) + sizeof(click_ip), &msg, sizeof(msg), 0);
 
-	self->output(int(interface)).push(packet);
+	// TODO: get the amount of interfaces and such in a generic way
+	for (int i = 0; i < 3; i++) { self->output(i).push(packet->clone()); }
 }
 
 CLICK_ENDDECLS

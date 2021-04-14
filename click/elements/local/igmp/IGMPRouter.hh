@@ -33,9 +33,13 @@ public:
 
     static void groupExpire(Timer *, void *);
 
-    static void handleResend(Timer *, void *);
+    static void handleSpecificResend(Timer *, void *);
+
+	static void handleGeneralResend(Timer*, void*);
 
     static void sendGroupSpecificQuery(IGMPRouter* self, uint32_t interface, IPAddress address);
+
+	static void sendGeneralQueries(IGMPRouter* self);
 
 private:
     IGMPRouterState *state;

@@ -132,9 +132,9 @@ elementclass Router {
 
     classifier[1] -> filter;
 
-    filter[0] -> IPPrint("filter0") -> server_db;
-    filter[1] -> IPPrint("filter1") -> client1_db;
-    filter[2] -> IPPrint("filter2") -> client2_db;
+    filter[0] -> server_db;
+    filter[1] -> client1_db;
+    filter[2] -> client2_db;
 
     sw[0] -> Discard;
     sw[1] -> [0]router;

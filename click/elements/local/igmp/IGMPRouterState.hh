@@ -20,6 +20,8 @@ struct GroupData
     bool isExclude;
 };
 
+constexpr bool DEBUG = true;
+
 // group address -> state
 using Groups = std::unordered_map<IPAddress, GroupData, Hash>;
 
@@ -43,24 +45,18 @@ public:
 
     // The Query Interval is the interval between General Queries sent by the Querier.
     // Default: 1250 (125 seconds)
-    uint32_t queryInterval = 10;
+    uint32_t queryInterval = DEBUG ? 30 : 1250;
 
     // Query Response Interval
     // The Max Response Time used to calculate the Max Resp Code inserted into the periodic General Queries.
     // Default: 100 (10 seconds)
-    uint32_t queryResponseInterval = 10;
+    uint32_t queryResponseInterval = DEBUG ? 5 : 100;
 
     // The Group Membership Interval is the amount of time that must pass
     // before a multicast router decides there are no more members of a
     // group or a particular source on a network.
     // This value MUST be ((the Robustness Variable) times (the Query Interval)) plus (one Query Response Interval).
     uint32_t groupMembershipInterval = robustness * queryInterval + queryResponseInterval;
-
-    // The Other Querier Present Interval is the length of time that must
-    // pass before a multicast router decides that there is no longer
-    // another multicast router which should be the querier.
-    // This value MUST be ((the Robustness Variable) times (the Query Interval)) plus (one half of one Query Response Interval).
-    uint32_t querierPresentInterval = robustness * queryInterval + (queryResponseInterval >> 1);
 
     // The Startup Query Interval is the interval between General Queries
     // sent by a Querier on startup.  Default: 1/4 the Query Interval.
