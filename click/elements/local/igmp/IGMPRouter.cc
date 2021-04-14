@@ -73,7 +73,10 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 			auto data  = new std::pair<Groups*, IPAddress>(&state->interfaces[interface], address);
 			auto timer = new Timer(IGMPRouter::groupExpire, data);
 
+			// start the timer with this expiry time to delete the group
 			timer->initialize(this);
+			timer->schedule_after_msec(state->groupMembershipInterval * 100);
+
 			state->interfaces[interface].emplace(address, GroupData{ timer, false });
 		}
 
@@ -84,8 +87,8 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 			// Exclude {} -> Someone wants to listen so we set it to true
 			group.isExclude = true;
 
-			// Cancel the group timer as we know at least someone is listening
-			group.groupTimer->clear();
+			// Reset the group timer to the expiry as we know at least someone is listening
+			group.groupTimer->schedule_after_msec(state->groupMembershipInterval * 100);;
 
 		} else if (group.isExclude and not group.groupTimer->scheduled()) {
 			// this is only triggered when the router doesn't know if someone is listening
@@ -103,7 +106,12 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 			timer->schedule_after_msec(0);
 
 			// change group timer value
-			group.groupTimer->schedule_after_msec(state->groupMembershipInterval * 100);
+			group.groupTimer->schedule_after_msec(state->lastMemberQueryTime * 100);
+		}
+		else if(group.isExclude and group.groupTimer->scheduled())
+		{
+			// reset the timer in this case but do not send queries
+            group.groupTimer->schedule_after_msec(state->lastMemberQueryTime * 100);
 		}
 		// If the mode is already include we don't have to worry about anything :)
 	}
