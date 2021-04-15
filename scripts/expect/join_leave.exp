@@ -9,15 +9,21 @@ set two $spawn_id
 
 send -i one "write client21/igmp.join 225.1.1.1\r"
 expect -i one "200"
+
 sleep 2
+
 send -i two "write client22/igmp.join 225.1.1.1\r"
 expect -i two "200"
+
 sleep 2
+
 send -i one "write client21/igmp.leave 225.1.1.1\r"
 expect -i one "200"
+
 sleep 2
+
 send -i two "write client22/igmp.leave 225.1.1.1\r"
 expect -i two "200"
+
 sleep 2
-close -i one
-close -i two
+close

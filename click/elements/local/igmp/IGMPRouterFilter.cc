@@ -24,6 +24,13 @@ void IGMPRouterFilter::push(int input, Packet* packet) {
 	// group address
 	auto address = IPAddress(packet->ip_header()->ip_dst);
 
+	// exception for 224.0.0.1 which should always be forwarded
+    if (address == IPAddress("224.0.0.1")) {
+		for(auto i = 0; i < noutputs(); i++) output(i).push(packet->clone());
+		return;
+	}
+
+
 	for (auto& interface : state->interfaces) {
 		// This means this specific interface doesn't recognise the group address.
 		if (interface.second.find(address) == interface.second.end()) continue;

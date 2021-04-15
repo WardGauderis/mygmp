@@ -1,0 +1,12 @@
+#!/usr/bin/expect
+
+#exp_internal 1
+
+spawn nc localhost 10003
+set one $spawn_id
+
+send -i one "write client21/igmp.join 225.1.1.1\r"
+expect -i one "200"
+
+# kill the client21 process
+pkill -f "clien21"

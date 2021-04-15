@@ -16,9 +16,9 @@ int IGMPRouter::configure(Vector<String>& conf, ErrorHandler* errh) {
 	auto data  = new std::pair<IGMPRouter*, uint32_t>(this, state->startupQueryCount);
 	auto timer = new Timer(IGMPRouter::handleGeneralResend, data);
 
-	// Weird trick with the direct schedule to reduce code duplication
+	// Cool trick with the schedule now to reduce code duplication
 	timer->initialize(this);
-	timer->schedule_after_msec(0);
+	timer->schedule_now();
 
 	return 0;
 }
@@ -65,8 +65,8 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 		GroupRecord* record  = ((GroupRecord*) (report + 1)) + i;
 		const auto   address = IPAddress(record->multicastAddress);
 
-		// check if host asked for a valid multicast address
-		if (!address.is_multicast()) continue;
+		// check if host asked for a valid multicast address, 224.0.0.1 is an exception
+		if (!address.is_multicast() or address == IPAddress("224.0.0.1")) continue;
 
 		// create the group if it doesn't exist
 		if (state->interfaces[interface].find(address) == state->interfaces[interface].end()) {
@@ -77,7 +77,7 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 			timer->initialize(this);
 			timer->schedule_after_msec(state->groupMembershipInterval * 100);
 
-			state->interfaces[interface].emplace(address, GroupData{ timer, false });
+			state->interfaces[interface].emplace(address, GroupData{ timer, nullptr, false });
 		}
 
 		auto& group = state->interfaces[interface][address];
@@ -89,11 +89,13 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 
 			// Reset the group timer to the expiry as we know at least someone is listening
 			group.groupTimer->schedule_after_msec(state->groupMembershipInterval * 100);
-			;
 
-		} else if (group.isExclude and not group.groupTimer->scheduled()) {
-			// this is only triggered when the router doesn't know if someone is listening
-			// and hasn't yet started the procedure to remedy this.
+		} else if (group.isExclude) {
+            // this is only triggered when the router doesn't know if someone is listening
+            // and hasn't yet started the procedure to remedy this.
+
+			// delete the old send timer
+			if(group.sendTimer) group.sendTimer->clear();
 
 			// create the timer state
 			auto data = new TimerData{ this, interface, address, state->lastMemberQueryCount };
@@ -102,14 +104,12 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 			// query
 			auto timer = new Timer(IGMPRouter::handleSpecificResend, data);
 
-			// timer of 0 seconds may sound weird but it avoids a lot of code duplication
+			// initialize and assign timer
 			timer->initialize(this);
-			timer->schedule_after_msec(0);
+			timer->schedule_now();
+            group.sendTimer = timer;
 
 			// change group timer value
-			group.groupTimer->schedule_after_msec(state->lastMemberQueryTime * 100);
-		} else if (group.isExclude and group.groupTimer->scheduled()) {
-			// reset the timer in this case but do not send queries
 			group.groupTimer->schedule_after_msec(state->lastMemberQueryTime * 100);
 		}
 		// If the mode is already include we don't have to worry about anything :)
@@ -120,11 +120,13 @@ void IGMPRouter::groupExpire(Timer* timer, void* data) {
 	auto* state = (std::pair<Groups*, IPAddress>*) data;
 
 	// for safety
-	click_chatter("removed group %s", state->second.unparse().c_str());
-	(*state->first)[state->second].isExclude = false;
+	if((*state->first)[state->second].isExclude) {
+        click_chatter("removed group %s", state->second.unparse().c_str());
+        (*state->first)[state->second].isExclude = false;
+	}
 
-	// remove the group record
-	state->first->erase(state->second);
+    // remove the group record
+    state->first->erase(state->second);
 }
 
 void IGMPRouter::handleSpecificResend(Timer* timer, void* data) {
@@ -157,6 +159,7 @@ void IGMPRouter::sendGroupSpecificQuery(IGMPRouter* self, uint32_t interface, IP
 
 	msg.checksum = click_in_cksum((const unsigned char*) (&msg), sizeof(QueryMessage));
 	auto packet  = Packet::make(sizeof(click_ether) + sizeof(click_ip), &msg, sizeof(msg), 0);
+	click_chatter("sending group specific query");
 
 	self->output(int(interface)).push(packet);
 }

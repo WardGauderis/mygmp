@@ -15,6 +15,7 @@
 
 struct GroupData {
 	Timer* groupTimer;
+	Timer* sendTimer;
 	bool   isExclude;
 };
 
