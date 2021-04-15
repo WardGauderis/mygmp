@@ -252,7 +252,7 @@ void IGMPClient::handleGroupReport(Timer* timer, void* data) {
 	report->client->groupTimers.erase(report->address);
 
 	if (!report->client->state->hasAddress(report->address) ||
-	    report->address == IPAddress("224.0.0.1") ||)
+	    report->address == IPAddress("224.0.0.1"))
 		return;
 
 	auto packet = Packet::make(sizeof(click_ether) + sizeof(click_ip), 0,
