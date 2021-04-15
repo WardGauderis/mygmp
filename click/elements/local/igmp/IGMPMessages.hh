@@ -9,9 +9,9 @@
 inline uint32_t U8toU32(uint8_t byte) {
 	if (byte < 128) return byte;
 
-    uint8_t exp  = (byte & 0x70) >> 4;
-    uint8_t mant = byte & 0x0F;
-    return (mant | 0x10) << (exp + 3);
+	uint8_t exp  = (byte & 0x70) >> 4;
+	uint8_t mant = byte & 0x0F;
+	return (mant | 0x10) << (exp + 3);
 }
 
 inline uint8_t U32toU8(uint32_t u32) {
@@ -19,24 +19,21 @@ inline uint8_t U32toU8(uint32_t u32) {
 	u32 = std::min(u32, 31744u);
 
 	uint32_t index = 31;
-	while ((u32 & 1 << index) == 0) {
-		--index;
-	}
+	while ((u32 & 1 << index) == 0) { --index; }
 
 	return 0x80 | (((index - 7) & 0x7) << 4) | (u32 >> (index - 4)) & 0xF;
 }
 
-
 // https://tools.ietf.org/html/rfc2113
 struct RouterAlertOption {
-    // option id
-    uint8_t byte1 = 0b10010100;
-    uint8_t byte2 = 0b00000100;
+	// option id
+	uint8_t byte1 = 0b10010100;
+	uint8_t byte2 = 0b00000100;
 
-    // 0 - Router shall examine packet
-    // 1..65536 - Reserved
-    uint8_t byte3 = 0b00000000;
-    uint8_t byte4 = 0b00000000;
+	// 0 - Router shall examine packet
+	// 1..65536 - Reserved
+	uint8_t byte3 = 0b00000000;
+	uint8_t byte4 = 0b00000000;
 };
 
 enum RecordType : uint8_t {

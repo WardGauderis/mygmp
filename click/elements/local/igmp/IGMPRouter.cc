@@ -88,7 +88,8 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 			group.isExclude = true;
 
 			// Reset the group timer to the expiry as we know at least someone is listening
-			group.groupTimer->schedule_after_msec(state->groupMembershipInterval * 100);;
+			group.groupTimer->schedule_after_msec(state->groupMembershipInterval * 100);
+			;
 
 		} else if (group.isExclude and not group.groupTimer->scheduled()) {
 			// this is only triggered when the router doesn't know if someone is listening
@@ -107,11 +108,9 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 
 			// change group timer value
 			group.groupTimer->schedule_after_msec(state->lastMemberQueryTime * 100);
-		}
-		else if(group.isExclude and group.groupTimer->scheduled())
-		{
+		} else if (group.isExclude and group.groupTimer->scheduled()) {
 			// reset the timer in this case but do not send queries
-            group.groupTimer->schedule_after_msec(state->lastMemberQueryTime * 100);
+			group.groupTimer->schedule_after_msec(state->lastMemberQueryTime * 100);
 		}
 		// If the mode is already include we don't have to worry about anything :)
 	}
@@ -163,21 +162,15 @@ void IGMPRouter::sendGroupSpecificQuery(IGMPRouter* self, uint32_t interface, IP
 }
 
 void IGMPRouter::sendGeneralQueries(IGMPRouter* self) {
-	auto msg = QueryMessage{ MessageType::QUERY,
-		                     U32toU8(self->state->queryResponseInterval),
-		                     0,
-		                     0,    // address is 0 in general query
-		                     0,
-		                     0,
-		                     self->state->robustness,
-		                     U32toU8(self->state->queryInterval),
-		                     0 };
+	auto msg = QueryMessage{
+		MessageType::QUERY,      U32toU8(self->state->queryResponseInterval), 0, 0, 0, 0,
+		self->state->robustness, U32toU8(self->state->queryInterval),         0
+	};
 
 	msg.checksum = click_in_cksum((const unsigned char*) (&msg), sizeof(QueryMessage));
 	auto packet  = Packet::make(sizeof(click_ether) + sizeof(click_ip), &msg, sizeof(msg), 0);
 
-	// TODO: get the amount of interfaces and such in a generic way
-	for (int i = 0; i < 3; i++) { self->output(i).push(packet->clone()); }
+	for (int i = 0; i < self->noutputs(); i++) { self->output(i).push(packet->clone()); }
 }
 
 CLICK_ENDDECLS

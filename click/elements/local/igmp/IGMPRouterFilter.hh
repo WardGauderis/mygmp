@@ -6,20 +6,20 @@
 
 CLICK_DECLS
 
-class IGMPRouterFilter : public Element {
+class IGMPRouterFilter: public Element {
 public:
-    const char *class_name() const override { return "IGMPRouterFilter"; }
+	const char* class_name() const override { return "IGMPRouterFilter"; }
 
-    const char *port_count() const override { return "1/-"; }
+	const char* port_count() const override { return "1/-"; }
 
-    const char *processing() const override { return PUSH; }
+	const char* processing() const override { return PUSH; }
 
-    int configure(Vector<String> &, ErrorHandler *) override;
+	int configure(Vector<String>&, ErrorHandler*) override;
 
-    void push(int, Packet *) override;
+	void push(int, Packet*) override;
 
 private:
-    IGMPRouterState *state;
+	IGMPRouterState* state;
 };
 
 CLICK_ENDDECLS
