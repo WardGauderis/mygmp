@@ -28,7 +28,10 @@ bool IGMPClientState::removeAddress(IPAddress address) { return addresses.erase(
  * @param address
  * @return
  */
-bool IGMPClientState::hasAddress(IPAddress address) const { return addresses.count(address); }
+bool IGMPClientState::hasAddress(IPAddress address) const {
+	if (address == IPAddress("224.0.0.1")) return true;
+	return addresses.count(address);
+}
 
 /**
  * check if any address has been joined

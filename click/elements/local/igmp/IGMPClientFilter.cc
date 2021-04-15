@@ -27,7 +27,7 @@ int IGMPClientFilter::configure(Vector<String>& conf, ErrorHandler* errh) {
  * @param p
  */
 void IGMPClientFilter::push(int port, Packet* p) {
-	if (p->dst_ip_anno() == IPAddress("224.0.0.1") || state->hasAddress(p->dst_ip_anno())) {
+	if (state->hasAddress(p->dst_ip_anno())) {
 		output(0).push(p);
 	}
 	output(1).push(p);
