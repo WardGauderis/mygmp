@@ -7,6 +7,12 @@
 #include "IGMPClient.hh"
 
 CLICK_DECLS
+/**
+ * read the reference to the IGMPClientState
+ * @param conf
+ * @param errh
+ * @return
+ */
 int IGMPClient::configure(Vector<String>& conf, ErrorHandler* errh) {
 	if (Args(conf, this, errh)
 	        .read_mp("STATE", ElementCastArg("IGMPClientState"), state)
@@ -20,11 +26,18 @@ int IGMPClient::configure(Vector<String>& conf, ErrorHandler* errh) {
 	return 0;
 }
 
+/**
+ * register handlers
+ */
 void IGMPClient::add_handlers() {
 	add_write_handler("join", &handleJoin, nullptr);
 	add_write_handler("leave", &handleLeave, nullptr);
 }
 
+/**
+ * schedule general/group report in response to a query
+ * @param p
+ */
 void IGMPClient::push(int, Packet* p) {
 	RouterAlertOption option{};
 	if (!(p->ip_header_length() > 5 * 4 &&
@@ -69,6 +82,14 @@ void IGMPClient::push(int, Packet* p) {
 	}
 }
 
+/**
+ * handler for the join command
+ * @param conf
+ * @param e
+ * @param thunk
+ * @param errh
+ * @return
+ */
 int IGMPClient::handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
 	auto client = (IGMPClient*) e;
 
@@ -88,6 +109,14 @@ int IGMPClient::handleJoin(const String& conf, Element* e, void* thunk, ErrorHan
 	return 0;
 }
 
+/**
+ * handler for the leave command
+ * @param conf
+ * @param e
+ * @param thunk
+ * @param errh
+ * @return
+ */
 int IGMPClient::handleLeave(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
 	auto client = (IGMPClient*) e;
 
@@ -107,6 +136,11 @@ int IGMPClient::handleLeave(const String& conf, Element* e, void* thunk, ErrorHa
 	return 0;
 }
 
+/**
+ * schedule an unsolicited interface change report
+ * @param type type of the record
+ * @param address groupaddress
+ */
 void IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress address) {
 	auto packet = Packet::make(sizeof(click_ether) + sizeof(click_ip), 0,
 	                           sizeof(ReportMessage) + sizeof(GroupRecord), 0);
@@ -146,6 +180,11 @@ void IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress address) 
 	changeTimers[address] = timer;
 }
 
+/**
+ * send an unsolicited interface change report
+ * @param timer
+ * @param data ScheduledChangeReport
+ */
 void IGMPClient::handleChangeReport(Timer* timer, void* data) {
 	auto* report = (ScheduledChangeReport*) data;
 	assert(report);
@@ -160,6 +199,11 @@ void IGMPClient::handleChangeReport(Timer* timer, void* data) {
 	                           report->client->unsolicitedReportInterval);
 }
 
+/**
+ * send a general report message
+ * @param timer to expire
+ * @param data IGMPClient
+ */
 void IGMPClient::handleGeneralReport(Timer* timer, void* data) {
 	auto client = (IGMPClient*) data;
 	assert(client);
@@ -194,6 +238,11 @@ void IGMPClient::handleGeneralReport(Timer* timer, void* data) {
 	printMessage("General", header);
 }
 
+/**
+ * send a Group specific report message
+ * @param timer that expires
+ * @param data ScheduledGroupReport
+ */
 void IGMPClient::handleGroupReport(Timer* timer, void* data) {
 	auto report = (ScheduledGroupReport*) data;
 	assert(report);
@@ -226,6 +275,11 @@ void IGMPClient::handleGroupReport(Timer* timer, void* data) {
 	printMessage("Group", header);
 }
 
+/**
+ * print the content of a report message
+ * @param front text to put in front
+ * @param message
+ */
 void printMessage(std::string front, ReportMessage* message) {
 	click_chatter("%s:\treport", front.c_str());
 	for (uint16_t i = 0; i < ntohs(message->NumGroupRecords); ++i) {
