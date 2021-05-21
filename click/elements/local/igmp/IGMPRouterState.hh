@@ -44,7 +44,7 @@ public:
 
 	// The Query Interval is the interval between General Queries sent by the Querier.
 	// Default: 1250 (125 seconds)
-	uint32_t queryInterval = DEBUG ? 30 : 1250;
+	uint32_t queryInterval = DEBUG ? 60 : 1250;
 
 	// Query Response Interval
 	// The Max Response Time used to calculate the Max Resp Code inserted into the periodic General
