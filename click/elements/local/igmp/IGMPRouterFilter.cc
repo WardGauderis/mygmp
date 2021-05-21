@@ -11,8 +11,6 @@ int IGMPRouterFilter::configure(Vector<String>& conf, ErrorHandler* errh) {
 		return errh->error("Could not parse IGMPRouterState");
 	}
 
-	// TODO: general queries??
-
 	return 0;
 }
 

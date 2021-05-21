@@ -12,8 +12,6 @@
 //	[2]: packets sent to the 192.168.3.0/24 network
 //  [3]: packets destined for the router itself
 
-// TODO: the router MUST enable reception of multicast address 224.0.0.22
-
 
 elementclass Router {
 
