@@ -174,7 +174,7 @@ void IGMPRouter::sendGroupSpecificQuery(IGMPRouter* self, uint32_t interface, IP
 	auto s = duration > Timestamp::make_msec(self->state->lastMemberQueryTime * 100);
 	//	click_chatter("%s, %u", duration.unparse().c_str(), s);
 
-	uint8_t byte = (s << 3) + std::max(self->state->robustness, 7u);
+	uint8_t byte = (s << 3) + std::min(self->state->robustness, 7u);
 	auto    msg  = QueryMessage{ MessageType::QUERY,
                              U32toU8(self->state->lastMemberQueryInterval),
                              0,
@@ -191,7 +191,7 @@ void IGMPRouter::sendGroupSpecificQuery(IGMPRouter* self, uint32_t interface, IP
 }
 
 void IGMPRouter::sendGeneralQueries(IGMPRouter* self) {
-	uint8_t byte = std::max(self->state->robustness, 7u);
+	uint8_t byte = std::min(self->state->robustness, 7u);
 	auto    msg  = QueryMessage{ MessageType::QUERY,
                              U32toU8(self->state->queryResponseInterval),
                              0,
