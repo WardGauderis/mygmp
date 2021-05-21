@@ -55,5 +55,6 @@ folder.
 - **timeout.exp**: Dit is een test waarin een client disconnect 
   zonder te leaven om te testen of dit correct behandelt wordt.
   
-- **overload.exp**: Dit scriptje gaat na ofdat de router meerdere leaves 
+
+- **overload.exp**: Dit scriptje gaat na of de router meerdere leaves 
   en joins na elkaar correct behandelt.

@@ -112,7 +112,7 @@ struct QueryMessage {
 	an IGMPv3 implementation MUST NOT include additional octets beyond
 	the fields described here. */
 
-	inline uint32_t maxRespTime() const { return U8toU32(maxRespCode); }
+	inline uint32_t maxRespTime() const { return U8toU32(maxRespCode) * 100; }
 	uint32_t        QQI() const;
 };
 

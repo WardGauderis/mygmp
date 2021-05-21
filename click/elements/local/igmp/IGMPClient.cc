@@ -63,10 +63,10 @@ void IGMPClient::push(int, Packet* p) {
 	qrv = query->qrv ? query->qrv : 2u;
 
 	//	if (!state->hasState()) return;
-	auto delay = (float) rand() / (float) RAND_MAX * query->maxRespTime();
+	auto delay = (int) (((float) rand() / (float) RAND_MAX) * query->maxRespTime());
 
 	if (generalTimer->scheduled() &&
-	    generalTimer->expiry_steady() - Timestamp::now_steady() < delay) {
+	    (generalTimer->expiry_steady() - Timestamp::now_steady()).msecval() < delay) {
 		return;
 	} else if (query->groupAddress == 0) {
 		generalTimer->schedule_after_msec(delay);
@@ -76,8 +76,8 @@ void IGMPClient::push(int, Packet* p) {
 		timer->initialize(this);
 		timer->schedule_after_msec(delay);
 		groupTimers[query->groupAddress] = timer;
-	} else if (groupTimers[query->groupAddress]->expiry_steady() - Timestamp::now_steady() >
-	           delay) {
+	} else if ((groupTimers[query->groupAddress]->expiry_steady() - Timestamp::now_steady())
+	               .msecval() > delay) {
 		groupTimers[query->groupAddress]->schedule_after_msec(delay);
 	}
 }
