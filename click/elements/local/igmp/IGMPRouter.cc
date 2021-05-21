@@ -91,14 +91,15 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 			group.groupTimer->schedule_after_msec(state->groupMembershipInterval * 100);
 
 		} else if (group.isExclude) {
-            // this is only triggered when the router doesn't know if someone is listening
-            // and hasn't yet started the procedure to remedy this.
+			// this is only triggered when the router doesn't know if someone is listening
+			// and hasn't yet started the procedure to remedy this.
 
 			// delete the old send timer
-			if(group.sendTimer) group.sendTimer->clear();
+			if (group.sendTimer) group.sendTimer->clear();
 
 			// create the timer state
-			auto data = new TimerData{ this, interface, address, state->lastMemberQueryCount };
+			auto data =
+				new TimerData{ this, interface, address, state->lastMemberQueryCount, true };
 
 			// this useful comment tells you the next line start a timer that sends a group specific
 			// query
@@ -107,10 +108,7 @@ void IGMPRouter::processReport(ReportMessage* report, uint32_t interface) {
 			// initialize and assign timer
 			timer->initialize(this);
 			timer->schedule_now();
-            group.sendTimer = timer;
-
-			// change group timer value
-			group.groupTimer->schedule_after_msec(state->lastMemberQueryTime * 100);
+			group.sendTimer = timer;
 		}
 		// If the mode is already include we don't have to worry about anything :)
 	}
@@ -120,13 +118,13 @@ void IGMPRouter::groupExpire(Timer* timer, void* data) {
 	auto* state = (std::pair<Groups*, IPAddress>*) data;
 
 	// for safety
-	if((*state->first)[state->second].isExclude) {
-        click_chatter("removed group %s", state->second.unparse().c_str());
-        (*state->first)[state->second].isExclude = false;
+	if ((*state->first)[state->second].isExclude) {
+		click_chatter("removed group %s", state->second.unparse().c_str());
+		(*state->first)[state->second].isExclude = false;
 	}
 
-    // remove the group record
-    state->first->erase(state->second);
+	// remove the group record
+	state->first->erase(state->second);
 }
 
 void IGMPRouter::handleSpecificResend(Timer* timer, void* data) {
@@ -137,6 +135,20 @@ void IGMPRouter::handleSpecificResend(Timer* timer, void* data) {
 
 	sendGroupSpecificQuery(values->self, values->interface, values->address);
 	timer->schedule_after_msec(values->self->state->lastMemberQueryInterval * 100);
+
+	if (values->first) {
+		// change group timer value
+		auto state = values->self->state;
+
+		if (state->interfaces.find(values->interface) == state->interfaces.end()) return;
+		const auto network = state->interfaces[values->interface];
+		if (network.find(values->address) == network.end()) return;
+		auto group = network.find(values->address)->second;
+
+		// reschedule group timer to LMQT
+		group.groupTimer->schedule_after_msec(state->lastMemberQueryTime * 100);
+		values->first = false;
+	}
 }
 
 void IGMPRouter::handleGeneralResend(Timer* timer, void* data) {
@@ -152,10 +164,24 @@ void IGMPRouter::handleGeneralResend(Timer* timer, void* data) {
 }
 
 void IGMPRouter::sendGroupSpecificQuery(IGMPRouter* self, uint32_t interface, IPAddress address) {
-	auto msg = QueryMessage{
-		MessageType::QUERY,      U32toU8(self->state->lastMemberQueryInterval), 0, address, 0, 0,
-		self->state->robustness, U32toU8(self->state->queryInterval),           0
-	};
+	if (self->state->interfaces.find(interface) == self->state->interfaces.end()) return;
+	const auto network = self->state->interfaces[interface];
+
+	if (network.find(address) == network.end()) return;
+
+	auto duration =
+		network.find(address)->second.groupTimer->expiry_steady() - Timestamp::now_steady();
+	auto s = duration > Timestamp::make_msec(self->state->lastMemberQueryTime * 100);
+	//	click_chatter("%s, %u", duration.unparse().c_str(), s);
+
+	uint8_t byte = (s << 3) + std::max(self->state->robustness, 7u);
+	auto    msg  = QueryMessage{ MessageType::QUERY,
+                             U32toU8(self->state->lastMemberQueryInterval),
+                             0,
+                             address,
+                             byte,
+                             U32toU8(self->state->queryInterval),
+                             0 };
 
 	msg.checksum = click_in_cksum((const unsigned char*) (&msg), sizeof(QueryMessage));
 	auto packet  = Packet::make(sizeof(click_ether) + sizeof(click_ip), &msg, sizeof(msg), 0);
@@ -165,10 +191,14 @@ void IGMPRouter::sendGroupSpecificQuery(IGMPRouter* self, uint32_t interface, IP
 }
 
 void IGMPRouter::sendGeneralQueries(IGMPRouter* self) {
-	auto msg = QueryMessage{
-		MessageType::QUERY,      U32toU8(self->state->queryResponseInterval), 0, 0, 0, 0,
-		self->state->robustness, U32toU8(self->state->queryInterval),         0
-	};
+	uint8_t byte = std::max(self->state->robustness, 7u);
+	auto    msg  = QueryMessage{ MessageType::QUERY,
+                             U32toU8(self->state->queryResponseInterval),
+                             0,
+                             0,
+                             byte,
+                             U32toU8(self->state->queryInterval),
+                             0 };
 
 	msg.checksum = click_in_cksum((const unsigned char*) (&msg), sizeof(QueryMessage));
 	auto packet  = Packet::make(sizeof(click_ether) + sizeof(click_ip), &msg, sizeof(msg), 0);

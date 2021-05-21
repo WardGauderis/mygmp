@@ -83,14 +83,15 @@ struct QueryMessage {
 	// 4.1.3. Group Address
 	in_addr groupAddress;
 
-	// 4.1.4. Resv (Reserved)
-	unsigned int resv : 4;
+    // 4.1.4. Resv (Reserved)
+    // 4.1.5. S Flag (Suppress Router-Side Processing)
+    // 4.1.6. QRV (Querier’s Robustness Variable) (max 7)
 
-	// 4.1.5. S Flag (Suppress Router-Side Processing)
-	unsigned int s : 1;
-
-	// 4.1.6. QRV (Querier’s Robustness Variable) (max 7)
-	unsigned int qrv : 3;
+    // https://en.cppreference.com/w/c/language/bit_field
+    // The following properties of bit fields are implementation-defined:
+	// The order of bit fields within an allocation unit (on some platforms,
+	// bit fields are packed left-to-right, on others right-to-left)
+    uint8_t resv_s_qrv;
 
 	// 4.1.7. QQIC (Querier’s Query Interval Code)
 	uint8_t qqic;    // uses u8 float

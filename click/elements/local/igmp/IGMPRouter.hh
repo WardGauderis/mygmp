@@ -14,6 +14,7 @@ struct TimerData {
 	uint32_t    interface;
 	IPAddress   address;
 	uint32_t    numResends;
+	bool first;
 };
 
 CLICK_DECLS
