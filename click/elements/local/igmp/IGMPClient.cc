@@ -60,7 +60,8 @@ void IGMPClient::push(int, Packet* p) {
 		return;
 	}
 
-	qrv = query->qrv ? query->qrv : 2u;
+	unsigned char new_qrv = query->resv_s_qrv & 0x7;
+	qrv = new_qrv ? new_qrv : 2u;
 
 	//	if (!state->hasState()) return;
 	auto delay = (int) (((float) rand() / (float) RAND_MAX) * query->maxRespTime());
