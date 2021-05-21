@@ -164,7 +164,7 @@ void IGMPClient::scheduleStateChangeMessage(RecordType type, IPAddress address) 
 		click_in_cksum((const unsigned char*) header, sizeof(ReportMessage) + sizeof(GroupRecord));
 
 	output(0).push(packet->clone());
-	printMessage(std::to_string(qrv - 1) + " remaining", header);
+	printMessage("Interface Change: " + std::to_string(qrv - 1) + " remaining", header);
 
 	auto iter = changeTimers.find(address);
 	if (iter != changeTimers.end()) {
